@@ -1,0 +1,326 @@
+package vn.viettel.quanlycongno.service;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import vn.viettel.quanlycongno.dto.ContractDto;
+import vn.viettel.quanlycongno.entity.Contract;
+import vn.viettel.quanlycongno.entity.Staff;
+import vn.viettel.quanlycongno.repository.ContractRepository;
+import vn.viettel.quanlycongno.repository.StaffRepository;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class ContractServiceTest {
+
+    @Mock
+    private ContractRepository contractRepository;
+
+    @Mock
+    private StaffRepository staffRepository;
+
+    @Mock
+    private AuthenticationService authenticationService;
+
+    @InjectMocks
+    private ContractService contractService;
+
+    private Staff assignedStaff;
+    private Staff creatorStaff;
+    private Staff updaterStaff;
+    private Contract contract;
+    private ContractDto contractDto;
+    private final String CONTRACT_ID = "contract-123";
+    private final String ASSIGNED_USERNAME = "assigneduser";
+    private final String CREATOR_USERNAME = "creatoruser";
+    private final String UPDATER_USERNAME = "updateruser";
+
+    @BeforeEach
+    void setUp() {
+        // Setup test data with different staff for each role
+        // Note: Assumed staff has been authorized with @PreAuthorize annotations in the controller
+        assignedStaff = new Staff();
+        assignedStaff.setUsername(ASSIGNED_USERNAME);
+
+        creatorStaff = new Staff();
+        creatorStaff.setUsername(CREATOR_USERNAME);
+
+        updaterStaff = new Staff();
+        updaterStaff.setUsername(UPDATER_USERNAME);
+
+        contract = new Contract();
+        contract.setContractId(CONTRACT_ID);
+        contract.setContractName("Test Contract");
+        contract.setCreatedBy(creatorStaff);
+        contract.setLastUpdatedBy(updaterStaff);
+        contract.setAssignedStaff(assignedStaff);
+        contract.setCreatedDate(new Date());
+        contract.setLastUpdateDate(new Date());
+
+        contractDto = new ContractDto();
+        contractDto.setContractId(CONTRACT_ID);
+        contractDto.setContractName("Test Contract");
+        contractDto.setAssignedStaffUsername(ASSIGNED_USERNAME);
+        contractDto.setCreatedByUsername(CREATOR_USERNAME);
+        contractDto.setLastUpdatedByUsername(UPDATER_USERNAME);
+    }
+
+    @Test
+    void getAllContracts_shouldReturnAllContracts() {
+        // Arrange
+        List<Contract> contracts = Arrays.asList(contract);
+        when(contractRepository.findAll()).thenReturn(contracts);
+
+        // Act
+        List<ContractDto> result = contractService.getAllContracts();
+
+        // Assert
+        assertEquals(1, result.size());
+        verify(contractRepository).findAll();
+    }
+
+    @Test
+    void getAllContracts_shouldReturnEmptyList_whenNoContractsExist() {
+        // Arrange
+        when(contractRepository.findAll()).thenReturn(Collections.emptyList());
+
+        // Act
+        List<ContractDto> result = contractService.getAllContracts();
+
+        // Assert
+        assertTrue(result.isEmpty());
+        verify(contractRepository).findAll();
+    }
+
+    @Test
+    void getContractById_shouldReturnContract_whenContractExists() {
+        // Arrange
+        when(contractRepository.findById(CONTRACT_ID)).thenReturn(Optional.of(contract));
+
+        // Act
+        ContractDto result = contractService.getContractById(CONTRACT_ID);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(CONTRACT_ID, result.getContractId());
+        assertEquals(ASSIGNED_USERNAME, result.getAssignedStaffUsername());
+        assertEquals(CREATOR_USERNAME, result.getCreatedByUsername());
+        assertEquals(UPDATER_USERNAME, result.getLastUpdatedByUsername());
+
+        verify(contractRepository).findById(CONTRACT_ID);
+    }
+
+    @Test
+    void getContractById_shouldThrowException_whenContractDoesNotExist() {
+        // Arrange
+        when(contractRepository.findById(CONTRACT_ID)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.getContractById(CONTRACT_ID));
+        
+        assertEquals("Contract not found with id: " + CONTRACT_ID, exception.getMessage());
+        verify(contractRepository).findById(CONTRACT_ID);
+    }
+
+    @Test
+    void saveContract_shouldSaveAndReturnContract() {
+        // Arrange
+        when(staffRepository.findByUsername(ASSIGNED_USERNAME)).thenReturn(Optional.of(assignedStaff));
+        when(authenticationService.getCurrentUsername()).thenReturn(ASSIGNED_USERNAME);
+        when(contractRepository.save(any(Contract.class))).thenAnswer(invocation -> {
+            Contract savedContract = invocation.getArgument(0);
+            savedContract.setContractId(CONTRACT_ID);
+            return savedContract;
+        });
+
+        // Act
+        ContractDto result = contractService.saveContract(contractDto);
+
+        // Assert
+        assertNotNull(result);
+        verify(staffRepository, times(2)).findByUsername(anyString());
+        verify(contractRepository).save(any(Contract.class));
+        verify(authenticationService).getCurrentUsername();
+    }
+
+    @Test
+    void saveContract_shouldThrowException_whenAssignedStaffNotFound() {
+        // Arrange
+        when(staffRepository.findByUsername(ASSIGNED_USERNAME)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.saveContract(contractDto));
+        
+        assertEquals("Assigned staff not found", exception.getMessage());
+        verify(staffRepository).findByUsername(ASSIGNED_USERNAME);
+        verify(contractRepository, never()).save(any(Contract.class));
+    }
+
+    @Test
+    void saveContract_shouldThrowException_whenCreatedByStaffNotFound() {
+        // Arrange
+        when(staffRepository.findByUsername(ASSIGNED_USERNAME)).thenReturn(Optional.of(assignedStaff));
+        when(staffRepository.findByUsername(CREATOR_USERNAME)).thenReturn(Optional.empty());
+        when(authenticationService.getCurrentUsername()).thenReturn(CREATOR_USERNAME);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.saveContract(contractDto));
+        
+        assertEquals("Created/updated by staff not found", exception.getMessage());
+        verify(staffRepository, times(2)).findByUsername(anyString());
+        verify(contractRepository, never()).save(any(Contract.class));
+    }
+
+    @Test
+    void updateContract_shouldUpdateAndReturnContract_whenContractExistsAndUserIsAuthorized() {
+        // Arrange
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(true);
+        when(contractRepository.findById(CONTRACT_ID)).thenReturn(Optional.of(contract));
+        when(staffRepository.findByUsername(ASSIGNED_USERNAME)).thenReturn(Optional.of(assignedStaff));
+        when(authenticationService.getCurrentUsername()).thenReturn(ASSIGNED_USERNAME);
+        when(contractRepository.save(any(Contract.class))).thenReturn(contract);
+
+        // Act
+        ContractDto result = contractService.updateContract(contractDto);
+
+        // Assert
+        assertNotNull(result);
+        verify(contractRepository).existsById(CONTRACT_ID);
+        verify(contractRepository).findById(CONTRACT_ID);
+        verify(staffRepository, times(2)).findByUsername(anyString());
+        verify(contractRepository).save(any(Contract.class));
+    }
+
+    @Test
+    void updateContract_shouldThrowException_whenContractDoesNotExist() {
+        // Arrange
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(false);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.updateContract(contractDto));
+        
+        assertEquals("Cannot update non-existent contract", exception.getMessage());
+        verify(contractRepository).existsById(CONTRACT_ID);
+        verify(authenticationService, never()).isAuthorized(anyString());
+        verify(contractRepository, never()).save(any(Contract.class));
+    }
+
+    @Test
+    void updateContract_shouldThrowException_whenContractNotFoundById() {
+        // Arrange
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(true);
+        when(contractRepository.findById(CONTRACT_ID)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.updateContract(contractDto));
+        
+        assertEquals("Contract not found with id: " + CONTRACT_ID, exception.getMessage());
+        verify(contractRepository).existsById(CONTRACT_ID);
+        verify(contractRepository).findById(CONTRACT_ID);
+        verify(contractRepository, never()).save(any(Contract.class));
+    }
+
+    @Test
+    void updateContract_shouldThrowException_whenAssignedStaffNotFound() {
+        // Arrange
+        contractDto.setAssignedStaffUsername("nonexistent");
+        
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(true);
+        when(contractRepository.findById(CONTRACT_ID)).thenReturn(Optional.of(contract));
+        when(staffRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.updateContract(contractDto));
+        
+        assertEquals("Assigned staff not found", exception.getMessage());
+        verify(contractRepository).existsById(CONTRACT_ID);
+        verify(contractRepository).findById(CONTRACT_ID);
+        verify(staffRepository).findByUsername("nonexistent");
+        verify(contractRepository, never()).save(any(Contract.class));
+    }
+
+    @Test
+    void updateContract_shouldThrowException_whenLastUpdatedByStaffNotFound() {
+        // Arrange
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(true);
+        when(contractRepository.findById(CONTRACT_ID)).thenReturn(Optional.of(contract));
+        when(staffRepository.findByUsername(ASSIGNED_USERNAME)).thenReturn(Optional.of(assignedStaff));
+        when(authenticationService.getCurrentUsername()).thenReturn("nonexistent");
+        when(staffRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.updateContract(contractDto));
+        
+        assertEquals("Last updated by staff not found", exception.getMessage());
+        verify(contractRepository).existsById(CONTRACT_ID);
+        verify(contractRepository).findById(CONTRACT_ID);
+        verify(contractRepository, never()).save(any(Contract.class));
+    }
+
+    @Test
+    void updateContract_shouldOnlyUpdateProvidedFields() {
+        // Arrange
+        ContractDto partialDto = new ContractDto();
+        partialDto.setContractId(CONTRACT_ID);
+        partialDto.setContractName("Updated Contract Name");
+        // Note: assignedStaffUsername is null
+
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(true);
+        when(contractRepository.findById(CONTRACT_ID)).thenReturn(Optional.of(contract));
+        when(staffRepository.findByUsername(UPDATER_USERNAME)).thenReturn(Optional.of(updaterStaff));
+        when(authenticationService.getCurrentUsername()).thenReturn(UPDATER_USERNAME);
+        when(contractRepository.save(any(Contract.class))).thenReturn(contract);
+
+        // Act
+        contractService.updateContract(partialDto);
+
+        // Assert
+        verify(contractRepository).save(argThat(savedContract -> 
+            "Updated Contract Name".equals(savedContract.getContractName()) && 
+            assignedStaff.equals(savedContract.getAssignedStaff())
+        ));
+    }
+
+    @Test
+    void deleteContract_shouldDeleteContract_whenContractExists() {
+        // Arrange
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(true);
+        doNothing().when(contractRepository).deleteById(CONTRACT_ID);
+
+        // Act
+        contractService.deleteContract(CONTRACT_ID);
+
+        // Assert
+        verify(contractRepository).existsById(CONTRACT_ID);
+        verify(contractRepository).deleteById(CONTRACT_ID);
+    }
+
+    @Test
+    void deleteContract_shouldThrowException_whenContractDoesNotExist() {
+        // Arrange
+        when(contractRepository.existsById(CONTRACT_ID)).thenReturn(false);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, 
+            () -> contractService.deleteContract(CONTRACT_ID));
+        
+        assertEquals("Contract not found with id: " + CONTRACT_ID, exception.getMessage());
+        verify(contractRepository).existsById(CONTRACT_ID);
+        verify(contractRepository, never()).deleteById(anyString());
+    }
+}

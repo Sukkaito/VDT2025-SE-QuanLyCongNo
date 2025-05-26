@@ -1,19 +1,20 @@
 package vn.viettel.quanlycongno.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Setter;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
+
+/**
+ * Entity representing a customer in the system.
+ */
 
 @Entity
 @Table(name = "customers")
 @Setter
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class Customer {
 
     @Id
@@ -22,9 +23,11 @@ public class Customer {
     private String customerId; // Mã khách hàng
 
     @Column(name = "customer_name", nullable = false)
+    @NonNull
     private String customerName; // Tên khách hàng
 
     @Column(name = "tax_code", nullable = false)
+    @NonNull
     private String taxCode; // Mã số thuế
 
     @Column(name = "abbreviation_name")
@@ -40,15 +43,17 @@ public class Customer {
 
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
+    @NonNull
     private Staff createdBy; // Người tạo
 
     @ManyToOne
     @JoinColumn(name = "last_updated_by", nullable = false)
+    @NonNull
     private Staff lastUpdatedBy; // Người cập nhật cuối
 
     @PrePersist
     protected void onCreate() {
-        if (createdDate == null) createdDate = new Date();
+        createdDate = new Date();
         lastUpdateDate = new Date();
     }
 

@@ -1,12 +1,16 @@
 package vn.viettel.quanlycongno.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import vn.viettel.quanlycongno.dto.ContractDto;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+/**
+ * Entity representing a contract in the system.
+ */
 
 @Entity
 @Table(name = "contracts")
@@ -39,13 +43,36 @@ public class Contract {
     @JoinColumn(name = "last_updated_by", nullable = false)
     private Staff lastUpdatedBy; // Người cập nhật cuối
 
+    @OneToMany(mappedBy = "contract", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Invoice> invoices = new ArrayList<>();
+
     @ManyToOne
-    @JoinColumn(name = "staff_id", nullable = false)
-    private Staff staff; // Nhân viên phụ trách
+    @JoinColumn(name = "assigned_to", nullable = false)
+    private Staff assignedStaff; // Nhân viên chính phụ trách hợp đồng
+
+    // Constructor with required fields
+    public Contract(String contractName, Staff createdBy, Staff lastUpdatedBy, Staff assignedStaff) {
+        this.contractName = contractName;
+        this.createdBy = createdBy;
+        this.lastUpdatedBy = lastUpdatedBy;
+        this.assignedStaff = assignedStaff;
+    }
+
+    public ContractDto toDTO() {
+        return new ContractDto(
+                contractId,
+                contractName,
+                createdDate,
+                lastUpdateDate,
+                createdBy.getUsername(),
+                lastUpdatedBy.getUsername(),
+                assignedStaff.getUsername()
+        );
+    }
 
     @PrePersist
     protected void onCreate() {
-        if (createdDate == null) createdDate = new Date();
+        createdDate = new Date();
         lastUpdateDate = new Date();
     }
 

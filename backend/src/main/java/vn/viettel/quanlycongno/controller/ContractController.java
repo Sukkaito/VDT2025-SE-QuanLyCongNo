@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import vn.viettel.quanlycongno.dto.ContractDto;
 import vn.viettel.quanlycongno.entity.Contract;
 import vn.viettel.quanlycongno.service.ContractService;
 
@@ -15,7 +16,7 @@ public class ContractController {
     private final ContractService contractService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<?> getAllContracts() {
         try {
             return new ResponseEntity<>(contractService.getAllContracts(), HttpStatus.OK);
@@ -25,7 +26,7 @@ public class ContractController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<?> getContractById(@PathVariable String id) {
         try {
             return new ResponseEntity<>(contractService.getContractById(id), HttpStatus.OK);
@@ -35,28 +36,28 @@ public class ContractController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createContract(@RequestBody Contract contract) {
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<?> createContract(@RequestBody ContractDto contractDto) {
         try {
-            return new ResponseEntity<>(contractService.saveContract(contract), HttpStatus.CREATED);
+            return new ResponseEntity<>(contractService.saveContract(contractDto), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('EMPLOYEE')")
-    public ResponseEntity<?> updateContract(@PathVariable String id, @RequestBody Contract contract) {
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF') and @authenticationService.isAuthorized(#id)")
+    public ResponseEntity<?> updateContract(@PathVariable String id, @RequestBody ContractDto contractDto) {
         try {
-            contract.setContractId(id);
-            return new ResponseEntity<>(contractService.updateContract(contract), HttpStatus.OK);
+            contractDto.setContractId(id);
+            return new ResponseEntity<>(contractService.updateContract(contractDto), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<?> deleteContract(@PathVariable String id) {
         try {
             contractService.deleteContract(id);
