@@ -3,10 +3,10 @@ package vn.viettel.quanlycongno.controller;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.viettel.quanlycongno.dto.ContractDto;
+import vn.viettel.quanlycongno.dto.base.ApiResponse;
 import vn.viettel.quanlycongno.service.ContractService;
 
 import java.util.Date;
@@ -19,64 +19,68 @@ public class ContractController {
 
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
-    public ResponseEntity<?> getAllContracts(
+    public ApiResponse<?> getAllContracts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "contractName") String sortBy,
             @RequestParam(defaultValue = "true") boolean sortAsc
     ) {
         try {
-            return new ResponseEntity<>(contractService.getAllContracts(page, size, sortBy, sortAsc), HttpStatus.OK);
+            return ApiResponse.success(contractService.getAllContracts(page, size, sortBy, sortAsc));
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
-    public ResponseEntity<?> getContractById(@PathVariable String id) {
+    public ApiResponse<?> getContractById(@PathVariable String id) {
         try {
-            return new ResponseEntity<>(contractService.getContractById(id), HttpStatus.OK);
+            return ApiResponse.success(contractService.getContractById(id));
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return ApiResponse.error(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<?> createContract(@RequestBody ContractDto contractDto) {
+    public ApiResponse<?> createContract(@RequestBody ContractDto contractDto) {
         try {
-            return new ResponseEntity<>(contractService.saveContract(contractDto), HttpStatus.CREATED);
+            return ApiResponse.success(contractService.saveContract(contractDto), "Contract created successfully");
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF') and @authenticationService.isAuthorizedContract(#id)")
-    public ResponseEntity<?> updateContract(@PathVariable String id, @RequestBody ContractDto contractDto) {
+    public ApiResponse<?> updateContract(@PathVariable String id, @RequestBody ContractDto contractDto) {
         try {
-            contractDto.setContractId(id);
-            return new ResponseEntity<>(contractService.updateContract(contractDto), HttpStatus.OK);
+            return ApiResponse.success(contractService.updateContract(id, contractDto), "Contract updated successfully");
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deleteContract(@PathVariable String id) {
+    public ApiResponse<?> deleteContract(@PathVariable String id) {
         try {
             contractService.deleteContract(id);
-            return new ResponseEntity<>("Contract deleted successfully", HttpStatus.OK);
+            return ApiResponse.success(null, "Contract deleted successfully");
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (RuntimeException e) {
+            return ApiResponse.error(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
     @GetMapping("/search")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
-    public ResponseEntity<?> searchContracts(
+    public ApiResponse<?> searchContracts(
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String assignedStaffUsername,
             @RequestParam(required = false) String createdByUsername,
@@ -89,14 +93,14 @@ public class ContractController {
             @RequestParam(defaultValue = "contractName") String sortBy,
             @RequestParam(defaultValue = "true") boolean sortAsc) {
         try {
-            return new ResponseEntity<>(contractService.searchContracts(
+            return ApiResponse.success(contractService.searchContracts(
                     query, assignedStaffUsername, createdByUsername,
                     createDateStart, createDateEnd,
                     lastUpdateStart, lastUpdateEnd,
                     page, size, sortBy, sortAsc
-            ), HttpStatus.OK);
+            ));
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 }

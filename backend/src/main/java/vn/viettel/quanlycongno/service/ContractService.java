@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import vn.viettel.quanlycongno.dto.ContractDto;
 import vn.viettel.quanlycongno.entity.Contract;
 import vn.viettel.quanlycongno.repository.ContractRepository;
+import vn.viettel.quanlycongno.repository.InvoiceRepository;
 import vn.viettel.quanlycongno.repository.StaffRepository;
 import vn.viettel.quanlycongno.entity.Staff;
 
@@ -26,6 +27,7 @@ public class ContractService {
     private final StaffRepository staffRepository;
     private final AuthenticationService authenticationService;
     private final ModelMapper mapper;
+    private final InvoiceRepository invoiceRepository;
 
     public Page<ContractDto> getAllContracts(int page, int size, String sortBy, boolean sortAsc) {
 
@@ -47,7 +49,7 @@ public class ContractService {
         Staff createdBy = staffRepository.findByUsername(authenticationService.getCurrentUsername())
                 .orElseThrow(() -> new RuntimeException("Created/updated by staff not found"));
 
-        Contract contract;
+        Contract contract; // Generate default credentials
         contract = mapper.map(contractDto, Contract.class);
         contract.setCreatedBy(createdBy);
         contract.setAssignedStaff(assignedStaff);
@@ -56,7 +58,8 @@ public class ContractService {
         return mapper.map(contractRepository.save(contract), ContractDto.class);
     }
 
-    public ContractDto updateContract(ContractDto contractDto) {
+    public ContractDto updateContract(String id, ContractDto contractDto) {
+        contractDto.setContractId(id);
         if (contractDto.getContractId() == null || !contractRepository.existsById(contractDto.getContractId())) {
             throw new RuntimeException("Cannot update non-existent contract");
         }
@@ -78,6 +81,10 @@ public class ContractService {
     public void deleteContract(String contractId) {
         if (!contractRepository.existsById(contractId)) {
             throw new RuntimeException("Contract not found with id: " + contractId);
+        }
+
+        if (invoiceRepository.existsByContract_ContractId(contractId)) {
+            throw new IllegalArgumentException("Cannot delete contract with existing invoices");
         }
 
         contractRepository.deleteById(contractId);
