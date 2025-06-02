@@ -2,7 +2,6 @@ package vn.viettel.quanlycongno.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import vn.viettel.quanlycongno.dto.ContractDto;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -56,18 +55,6 @@ public class Contract {
         this.createdBy = createdBy;
         this.lastUpdatedBy = lastUpdatedBy;
         this.assignedStaff = assignedStaff;
-    }
-
-    public ContractDto toDTO() {
-        return new ContractDto(
-                contractId,
-                contractName,
-                createdDate,
-                lastUpdateDate,
-                createdBy.getUsername(),
-                lastUpdatedBy.getUsername(),
-                assignedStaff.getUsername()
-        );
     }
 
     @PrePersist

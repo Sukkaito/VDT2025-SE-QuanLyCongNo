@@ -6,11 +6,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "vn.viettel.quanlycongno")
 public class QuanlycongnoApplication {
 	public static ApplicationContext context;
 
 	public static void main(String[] args) {
+		System.setProperty("spring.profiles.active", "dev");
 		context = SpringApplication.run(QuanlycongnoApplication.class, args);
 	}
 

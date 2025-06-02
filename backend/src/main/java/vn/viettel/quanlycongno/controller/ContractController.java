@@ -1,13 +1,15 @@
 package vn.viettel.quanlycongno.controller;
 
 import lombok.AllArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.viettel.quanlycongno.dto.ContractDto;
-import vn.viettel.quanlycongno.entity.Contract;
 import vn.viettel.quanlycongno.service.ContractService;
+
+import java.util.Date;
 
 @RestController
 @RequestMapping("/api/contracts")
@@ -17,9 +19,14 @@ public class ContractController {
 
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
-    public ResponseEntity<?> getAllContracts() {
+    public ResponseEntity<?> getAllContracts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "contractName") String sortBy,
+            @RequestParam(defaultValue = "true") boolean sortAsc
+    ) {
         try {
-            return new ResponseEntity<>(contractService.getAllContracts(), HttpStatus.OK);
+            return new ResponseEntity<>(contractService.getAllContracts(page, size, sortBy, sortAsc), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -46,7 +53,7 @@ public class ContractController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF') and @authenticationService.isAuthorized(#id)")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF') and @authenticationService.isAuthorizedContract(#id)")
     public ResponseEntity<?> updateContract(@PathVariable String id, @RequestBody ContractDto contractDto) {
         try {
             contractDto.setContractId(id);
@@ -64,6 +71,32 @@ public class ContractController {
             return new ResponseEntity<>("Contract deleted successfully", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
+    public ResponseEntity<?> searchContracts(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String assignedStaffUsername,
+            @RequestParam(required = false) String createdByUsername,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date createDateStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date createDateEnd,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date lastUpdateStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date lastUpdateEnd,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "contractName") String sortBy,
+            @RequestParam(defaultValue = "true") boolean sortAsc) {
+        try {
+            return new ResponseEntity<>(contractService.searchContracts(
+                    query, assignedStaffUsername, createdByUsername,
+                    createDateStart, createDateEnd,
+                    lastUpdateStart, lastUpdateEnd,
+                    page, size, sortBy, sortAsc
+            ), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
