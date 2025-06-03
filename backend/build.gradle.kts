@@ -31,6 +31,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	// https://mvnrepository.com/artifact/org.modelmapper/modelmapper
 	implementation("org.modelmapper:modelmapper:3.2.3")
+	// https://mvnrepository.com/artifact/org.apache.poi/poi
+	implementation("org.apache.poi:poi:5.4.1")
+	implementation("org.apache.poi:poi-ooxml:5.4.1")
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	developmentOnly("org.springframework.boot:spring-boot-docker-compose")

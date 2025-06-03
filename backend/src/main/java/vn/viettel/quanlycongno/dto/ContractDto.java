@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import vn.viettel.quanlycongno.entity.Contract;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -30,7 +29,7 @@ public class ContractDto implements Serializable {
     Date createdDate;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    Date lastUpdateDate;
+    Date lastUpdatedDate;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     String createdByUsername;

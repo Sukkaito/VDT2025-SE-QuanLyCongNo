@@ -9,6 +9,8 @@ services:
       - 'MARIADB_USER=myuser'
     ports:
       - '3306:3306'
+    networks:
+        - 'mariadb-network'
   mariadb-stress-test:
     image: 'mariadb:latest'
     container_name: 'mariadb-stress-test'
@@ -19,3 +21,8 @@ services:
       - 'MARIADB_USER=myuser'
     ports:
       - '3305:3306'
+    networks:
+      - 'mariadb-network'
+networks:
+  mariadb-network:
+    driver: 'bridge'
