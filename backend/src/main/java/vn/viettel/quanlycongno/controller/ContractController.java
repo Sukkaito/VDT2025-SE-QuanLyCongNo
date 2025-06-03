@@ -40,7 +40,7 @@ public class ContractController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[a-f0-9\\-]+}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ApiResponse<?> getContractById(@PathVariable String id) {
         try {
