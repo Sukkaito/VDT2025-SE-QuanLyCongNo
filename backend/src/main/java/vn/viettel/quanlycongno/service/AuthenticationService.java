@@ -88,8 +88,8 @@ public class AuthenticationService {
         String username = getCurrentUsername();
 
         // Check if staff is the assigned for the customer
-        Optional<Contract> optContract = contractRepository.findById(customerId);
-        return optContract.filter(contract -> username.equals(contract.getAssignedStaff().getUsername())).isPresent();
+        Optional<Customer> optCustomer = customerRepository.findById(customerId);
+        return optCustomer.filter(contract -> username.equals(contract.getAssignedStaff().getUsername())).isPresent();
     }
 
     private boolean isAdmin() {
