@@ -130,13 +130,9 @@ public class Invoice {
 
     private void calculateDerivedAmounts() {
         // Calculate convertedAmountPreVat = originalAmount * exchangeRate
-        if (originalAmount != null && exchangeRate != null) {
-            this.convertedAmountPreVat = originalAmount.multiply(exchangeRate);
-        }
+        this.convertedAmountPreVat = originalAmount.multiply(exchangeRate);
 
         // Calculate totalAmountWithVat = convertedAmountPreVat + vat
-        if (convertedAmountPreVat != null && vat != null) {
-            this.totalAmountWithVat = convertedAmountPreVat.add(vat);
-        }
+        this.totalAmountWithVat = convertedAmountPreVat.add(vat);
     }
 }

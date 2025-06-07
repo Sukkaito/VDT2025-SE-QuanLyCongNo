@@ -6,11 +6,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import vn.viettel.quanlycongno.constant.RoleEnum;
 import vn.viettel.quanlycongno.entity.Contract;
+import vn.viettel.quanlycongno.entity.Customer;
+import vn.viettel.quanlycongno.entity.Invoice;
 import vn.viettel.quanlycongno.entity.Staff;
 import vn.viettel.quanlycongno.repository.ContractRepository;
+import vn.viettel.quanlycongno.repository.CustomerRepository;
 import vn.viettel.quanlycongno.repository.InvoiceRepository;
 import vn.viettel.quanlycongno.repository.StaffRepository;
 
+import javax.swing.text.html.Option;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -23,15 +28,17 @@ public class AuthenticationService {
     private final StaffRepository staffRepository;
     private final ContractRepository contractRepository;
     private final InvoiceRepository invoiceRepository;
+    private final CustomerRepository customerRepository;
 
 
     @Autowired
     public AuthenticationService(StaffRepository staffRepository,
                                  ContractRepository contractRepository,
-                                 InvoiceRepository invoiceRepository) {
+                                 InvoiceRepository invoiceRepository, CustomerRepository customerRepository) {
         this.staffRepository = staffRepository;
         this.contractRepository = contractRepository;
         this.invoiceRepository = invoiceRepository;
+        this.customerRepository = customerRepository;
     }
 
     /**
@@ -42,6 +49,50 @@ public class AuthenticationService {
      */
     public boolean isAuthorizedContract(String contractId) {
 
+        if (isAdmin()) return true;
+
+        String username = getCurrentUsername();
+
+        // Check if staff is the assigned staff for the contract
+        Optional<Contract> contractOpt = contractRepository.findById(contractId);
+        return contractOpt.filter(contract -> username.equals(contract.getAssignedStaff().getUsername())).isPresent();
+
+    }
+
+    /**
+     * Checks if the current authenticated user is authorized to access the specified invoice.
+     *
+     * @param invoiceId The ID of the invoice to check authorization for.
+     * @return true if the user is authorized, false otherwise.
+     */
+    public boolean isAuthorizedInvoice(String invoiceId) {
+
+        if (isAdmin()) return true;
+
+        String username = getCurrentUsername();
+
+        // Check if staff is the assigned staff for the invoice
+        Optional<Invoice> optInvoice = invoiceRepository.findById(invoiceId);
+        return optInvoice.filter(invoice -> username.equals(invoice.getStaff().getUsername())).isPresent();
+    }
+
+    /**
+     * Checks if the current authenticated user is authorized to access the specified customer.
+     * @param customerId The ID of the customer to check authorization for.
+     * @return true if the user is authorized, false otherwise.
+     */
+    public boolean isAuthorizedCustomer(String customerId) {
+
+        if (isAdmin()) return true;
+
+        String username = getCurrentUsername();
+
+        // Check if staff is the assigned for the customer
+        Optional<Contract> optContract = contractRepository.findById(customerId);
+        return optContract.filter(contract -> username.equals(contract.getAssignedStaff().getUsername())).isPresent();
+    }
+
+    private boolean isAdmin() {
         // Get current authenticated user
         Authentication authentication = getAuthentication();
         if (authentication == null) return false;
@@ -52,16 +103,19 @@ public class AuthenticationService {
         Staff staff = staffOpt.get();
 
         // Check if staff is admin
-        if (staff.getRole().getRoleName().equals(RoleEnum.ADMIN)) {
-            return true;
-        }
+        return staff.getRole().getRoleName().equals(RoleEnum.ADMIN);
+    }
 
-        // Check if staff is the assigned staff for the contract
-        Optional<Contract> contractOpt = contractRepository.findById(contractId);
-        if (contractOpt.isEmpty()) return false;
-        Contract contract = contractOpt.get();
-
-        return contract.getAssignedStaff().getId().equals(staff.getId());
+    /**
+     * Retrieves the username of the currently authenticated user.
+     * As a result, it only get invoked if authentication is guaranteed to be non-null.
+     * @return The username of the current user.
+     * @throws IllegalStateException if the authentication is null.
+     */
+    public String getCurrentUsername() {
+        Authentication authentication = getAuthentication();
+        assert authentication != null;
+        return authentication.getName();
     }
 
     /**
@@ -75,30 +129,5 @@ public class AuthenticationService {
             return null;
         }
         return authentication;
-    }
-
-    /**
-     * Checks if the current authenticated user is authorized to access the specified invoice.
-     *
-     * @param invoiceId The ID of the invoice to check authorization for.
-     * @return true if the user is authorized, false otherwise.
-     */
-    public boolean isAuthorizedInvoice(String invoiceId) {
-
-        String contractId = invoiceRepository.findById(invoiceId)
-                .map(invoice -> invoice.getContract().getContractId())
-                .orElse(null);
-        return isAuthorizedContract(contractId);
-    }
-    /**
-     * Retrieves the username of the currently authenticated user.
-     * As a result, it only get invoked if authentication is guaranteed to be non-null.
-     * @return The username of the current user.
-     * @throws IllegalStateException if the authentication is null.
-     */
-    public String getCurrentUsername() {
-        Authentication authentication = getAuthentication();
-        assert authentication != null;
-        return authentication.getName();
     }
 }

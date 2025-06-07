@@ -91,12 +91,11 @@ public class ContractService {
 
     @Transactional
     public ContractDto updateContract(String id, ContractDto contractDto) {
-        contractDto.setContractId(id);
-        if (contractDto.getContractId() == null || !contractRepository.existsById(contractDto.getContractId())) {
+        if (!contractRepository.existsById(id)) {
             throw new RuntimeException("Cannot update non-existent contract");
         }
 
-        Contract contract = contractRepository.findById(contractDto.getContractId())
+        Contract contract = contractRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contract not found with id: " + contractDto.getContractId()));
         Staff assignedStaff = staffRepository.findByUsername(contractDto.getAssignedStaffUsername())
                 .orElseThrow(() -> new RuntimeException("Assigned staff not found"));
