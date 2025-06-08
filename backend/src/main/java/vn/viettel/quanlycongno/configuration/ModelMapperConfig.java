@@ -65,6 +65,9 @@ public class ModelMapperConfig {
                         skip(destination.getStaff());
                         skip(destination.getCreatedBy());
                         skip(destination.getLastUpdatedBy());
+
+                        skip(destination.getConvertedAmountPreVat());
+                        skip(destination.getTotalAmountWithVat());
                     }
                 });
 

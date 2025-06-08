@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 
 /**
@@ -119,20 +120,10 @@ public class Invoice {
     protected void onCreate() {
         createdDate = new Date();
         lastUpdateDate = new Date();
-        calculateDerivedAmounts();
     }
 
     @PreUpdate
     protected void onUpdate() {
         lastUpdateDate = new Date();
-        calculateDerivedAmounts();
-    }
-
-    private void calculateDerivedAmounts() {
-        // Calculate convertedAmountPreVat = originalAmount * exchangeRate
-        this.convertedAmountPreVat = originalAmount.multiply(exchangeRate);
-
-        // Calculate totalAmountWithVat = convertedAmountPreVat + vat
-        this.totalAmountWithVat = convertedAmountPreVat.add(vat);
     }
 }

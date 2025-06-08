@@ -2,13 +2,13 @@ CREATE TRIGGER IF NOT EXISTS before_invoice_insert
     BEFORE INSERT ON invoices
     FOR EACH ROW
     SET NEW.converted_amount_pre_vat = NEW.original_amount * NEW.exchange_rate,
-        NEW.total_amount_with_vat = (NEW.original_amount * NEW.exchange_rate) + NEW.vat;
+        NEW.total_amount_with_vat = (NEW.original_amount * NEW.exchange_rate) * (1 + NEW.vat / 100);
 
 CREATE TRIGGER IF NOT EXISTS before_invoice_update
     BEFORE UPDATE ON invoices
     FOR EACH ROW
     SET NEW.converted_amount_pre_vat = NEW.original_amount * NEW.exchange_rate,
-        NEW.total_amount_with_vat = (NEW.original_amount * NEW.exchange_rate) + NEW.vat;
+        NEW.total_amount_with_vat = (NEW.original_amount * NEW.exchange_rate) * (1 + NEW.vat / 100);
 
 # INSERT INTO roles (role_id, role_name) VALUES
 #     (1, 'ADMIN'),
