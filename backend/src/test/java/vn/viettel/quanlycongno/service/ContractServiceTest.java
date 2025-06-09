@@ -11,7 +11,7 @@
 //import vn.viettel.quanlycongno.dto.ContractDto;
 //import vn.viettel.quanlycongno.entity.Contract;
 //import vn.viettel.quanlycongno.entity.Staff;
-//import vn.viettel.quanlycongno.repository.ContractRepository;
+//import vn.viettel.quanlycongno.repository.impl.ContractRepositoryImpl;
 //import vn.viettel.quanlycongno.repository.StaffRepository;
 //
 //import java.util.*;
@@ -24,7 +24,7 @@
 //class ContractServiceTest {
 //
 //    @Mock
-//    private ContractRepository contractRepository;
+//    private ContractRepositoryImpl contractRepository;
 //
 //    @Mock
 //    private StaffRepository staffRepository;

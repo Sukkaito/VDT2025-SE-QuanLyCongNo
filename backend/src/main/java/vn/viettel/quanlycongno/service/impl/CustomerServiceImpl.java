@@ -12,14 +12,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import vn.viettel.quanlycongno.dto.ContractDto;
 import vn.viettel.quanlycongno.dto.CustomerDto;
+import vn.viettel.quanlycongno.dto.InvoiceDto;
+import vn.viettel.quanlycongno.dto.base.PagedResponse;
 import vn.viettel.quanlycongno.entity.Customer;
 import vn.viettel.quanlycongno.entity.Staff;
 import vn.viettel.quanlycongno.repository.CustomerRepository;
 import vn.viettel.quanlycongno.repository.InvoiceRepository;
 import vn.viettel.quanlycongno.repository.StaffRepository;
 import vn.viettel.quanlycongno.service.AuthenticationService;
+import vn.viettel.quanlycongno.service.ContractService;
 import vn.viettel.quanlycongno.service.CustomerService;
+import vn.viettel.quanlycongno.service.InvoiceService;
 import vn.viettel.quanlycongno.util.CsvUtils;
 
 import java.io.BufferedReader;
@@ -39,12 +44,15 @@ public class CustomerServiceImpl implements CustomerService {
     private final AuthenticationService authenticationService;
     private final ModelMapper mapper;
     private final InvoiceRepository invoiceRepository;
+    private final InvoiceService invoiceService;
+    private final ContractService contractService;
 
-    public Page<CustomerDto> getAllCustomers(int page, int size, String sortBy, boolean sortAsc) {
+    public PagedResponse<CustomerDto> getAllCustomers(int page, int size, String sortBy, boolean sortAsc) {
         Pageable pageable = getPageableCustomer(page, size, sortBy, sortAsc);
 
-        return customerRepository.findAll(pageable)
+        Page<CustomerDto> customerPage = customerRepository.findAll(pageable)
                 .map(this::toContractDto);
+        return PagedResponse.from(customerPage, customerPage.getContent());
     }
 
     public CustomerDto getCustomerById(String id) {
@@ -122,7 +130,8 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepository.deleteById(customerId);
     }
 
-    public Page<CustomerDto> searchCustomers(String query,
+    public PagedResponse<CustomerDto> searchCustomers(String query,
+                                             String assignedStaffUsername,
                                              String createdByUsername,
                                              Date createDateStart,
                                              Date createDateEnd,
@@ -131,9 +140,10 @@ public class CustomerServiceImpl implements CustomerService {
                                              int page, int size, String sortBy, boolean sortAsc) {
         Pageable pageable = getPageableCustomer(page, size, sortBy, sortAsc);
 
-        return customerRepository.searchByCriteria(query, createdByUsername,
+        Page<CustomerDto> customerPage =  customerRepository.searchByCriteria(query, assignedStaffUsername, createdByUsername,
                         createDateStart, createDateEnd, lastUpdateStart, lastUpdateEnd, pageable)
                 .map(customer -> mapper.map(customer, CustomerDto.class));
+        return PagedResponse.from(customerPage, customerPage.getContent());
     }
 
     private static Pageable getPageableCustomer(int page, int size, String sortBy, boolean sortAsc) {
@@ -211,13 +221,13 @@ public class CustomerServiceImpl implements CustomerService {
         return CsvUtils.parseCsvLine(line);
     }
 
-    public Resource exportCustomersToCsv(String query, String createdByUsername,
+    public Resource exportCustomersToCsv(String query, String assignedStaffUsername, String createdByUsername,
                                          Date createDateStart, Date createDateEnd,
                                          Date lastUpdateStart, Date lastUpdateEnd,
                                          int page, int size, String sortBy, boolean sortAsc) {
         Pageable pageable = getPageableCustomer(page, size, sortBy, sortAsc);
 
-        List<Customer> customers = customerRepository.searchByCriteria(query, createdByUsername,
+        List<Customer> customers = customerRepository.searchByCriteria(query, assignedStaffUsername, createdByUsername,
                 createDateStart, createDateEnd, lastUpdateStart, lastUpdateEnd, pageable).toList();
 
         try (ByteArrayOutputStream ignored = new ByteArrayOutputStream()) {
@@ -256,5 +266,27 @@ public class CustomerServiceImpl implements CustomerService {
                 customer.getUsedToBeHandledByStaffs().stream().map(Staff::getUsername).toList()
         );
         return dto;
+    }
+
+    @Override
+    public PagedResponse<InvoiceDto> getInvoicesByCustomerId(
+            String customerId,
+            int page,
+            int size,
+            String sortBy,
+            boolean sortAsc
+    ) {
+        return invoiceService.getInvoiceByCustomerId(customerId, page, size, sortBy,sortAsc);
+    }
+
+    @Override
+    public PagedResponse<ContractDto> getContractsByCustomerId(
+            String customerId,
+            int page,
+            int size,
+            String sortBy,
+            boolean sortAsc
+    ) {
+        return contractService.getContractsByCustomerId(customerId, page, size, sortBy,sortAsc);
     }
 }

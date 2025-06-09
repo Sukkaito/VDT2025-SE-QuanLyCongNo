@@ -161,4 +161,20 @@ public class ContractController {
                     .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to export contracts: " + e.getMessage()));
         }
     }
+
+    @GetMapping("/{contractId:[a-f0-9\\-]+}/invoices")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
+    public ApiResponse<?> getInvoicesByContractId(
+            @PathVariable String contractId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "contractName") String sortBy,
+            @RequestParam(defaultValue = "true") boolean sortAsc) {
+        try {
+            return ApiResponse.success(contractService.getInvoicesByContractId(
+                    contractId, page, size, sortBy, sortAsc));
+        } catch (Exception e) {
+            return ApiResponse.error(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
 }

@@ -10,6 +10,7 @@ import vn.viettel.quanlycongno.entity.Invoice;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Optional;
 
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, String> {
@@ -51,4 +52,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, String> {
     boolean existsByContract_ContractId(String contractId);
 
     boolean existsByCustomer_CustomerId(String customerId);
+
+    Page<Invoice> findByContract_ContractId(String contractId, Pageable pageable);
+
+    Page<Invoice> findByCustomer_CustomerId(String customerId, Pageable pageable);
 }

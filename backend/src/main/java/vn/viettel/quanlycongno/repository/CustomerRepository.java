@@ -14,9 +14,11 @@ import java.util.Date;
 public interface CustomerRepository extends JpaRepository<Customer, String> {
     @Query("SELECT c FROM Customer c " +
             "LEFT JOIN c.createdBy u WITH (:createdByUsername IS NOT NULL) " +
+            "LEFT JOIN c.assignedStaff s WITH (:assignedStaffUsername IS NOT NULL) " +
             "WHERE (:query IS NULL OR LOWER(c.customerName) LIKE LOWER(CONCAT('%', :query, '%')) " +
             "       OR LOWER(c.taxCode) LIKE LOWER(CONCAT('%', :query, '%')) " +
             "       OR LOWER(c.abbreviationName) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+            "AND (:assignedStaffUsername IS NULL OR s.username = :assignedStaffUsername) " +
             "AND (:createdByUsername IS NULL OR u.username = :createdByUsername) " +
             "AND (:createDateStart IS NULL OR c.createdDate >= :createDateStart) " +
             "AND (:createDateEnd IS NULL OR c.createdDate <= :createDateEnd) " +
@@ -24,6 +26,7 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
             "AND (:lastUpdateEnd IS NULL OR c.lastUpdateDate <= :lastUpdateEnd) ")
     Page<Customer> searchByCriteria(
             @Param("query") String query,
+            @Param("assignedStaffUsername") String assignedStaffUsername,
             @Param("createdByUsername") String createdByUsername,
             @Param("createDateStart") Date createDateStart,
             @Param("createDateEnd") Date createDateEnd,

@@ -32,7 +32,7 @@ public class Contract {
 
     @Column(name = "last_update_date", nullable = false)
     @Temporal(TemporalType.DATE)
-    private Date lastUpdateDate; // Ngày cập nhật cuối
+    private Date lastUpdatedDate; // Ngày cập nhật cuối
 
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
@@ -60,11 +60,11 @@ public class Contract {
     @PrePersist
     protected void onCreate() {
         createdDate = new Date();
-        lastUpdateDate = new Date();
+        lastUpdatedDate = new Date();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        lastUpdateDate = new Date();
+        lastUpdatedDate = new Date();
     }
 }

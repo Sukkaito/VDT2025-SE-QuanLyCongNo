@@ -18,13 +18,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import vn.viettel.quanlycongno.dto.ContractDto;
+import vn.viettel.quanlycongno.dto.InvoiceDto;
+import vn.viettel.quanlycongno.dto.base.PagedResponse;
 import vn.viettel.quanlycongno.entity.Contract;
 import vn.viettel.quanlycongno.repository.ContractRepository;
+import vn.viettel.quanlycongno.repository.CustomerRepository;
 import vn.viettel.quanlycongno.repository.InvoiceRepository;
 import vn.viettel.quanlycongno.repository.StaffRepository;
 import vn.viettel.quanlycongno.entity.Staff;
 import vn.viettel.quanlycongno.service.AuthenticationService;
 import vn.viettel.quanlycongno.service.ContractService;
+import vn.viettel.quanlycongno.service.InvoiceService;
 import vn.viettel.quanlycongno.util.CsvUtils;
 
 import java.util.Arrays;
@@ -41,13 +45,17 @@ public class ContractServiceImpl implements ContractService {
     private final AuthenticationService authenticationService;
     private final ModelMapper mapper;
     private final InvoiceRepository invoiceRepository;
+    private final CustomerRepository customerRepository;
+    private final InvoiceService invoiceService;
 
-    public Page<ContractDto> getAllContracts(int page, int size, String sortBy, boolean sortAsc) {
+    public PagedResponse<ContractDto> getAllContracts(int page, int size, String sortBy, boolean sortAsc) {
 
         Pageable pageable = getPageableContract(page, size, sortBy, sortAsc);
 
-        return contractRepository.findAll(pageable)
+        Page<ContractDto> contractPage = contractRepository.findAll(pageable)
                 .map(contract -> mapper.map(contract, ContractDto.class));
+
+        return PagedResponse.from(contractPage, contractPage.getContent());
     }
 
     public ContractDto getContractById(String id) {
@@ -125,7 +133,7 @@ public class ContractServiceImpl implements ContractService {
         contractRepository.deleteById(contractId);
     }
 
-    public Page<ContractDto> searchContracts(String query,
+    public PagedResponse<ContractDto> searchContracts(String query,
                                              String assignedStaffUsername,
                                              String createdByUsername,
                                              Date createDateStart,
@@ -135,9 +143,10 @@ public class ContractServiceImpl implements ContractService {
                                              int page, int size, String sortBy, boolean sortAsc) {
         Pageable pageable = getPageableContract(page, size, sortBy, sortAsc);
 
-        return contractRepository.searchByCriteria(query, assignedStaffUsername, createdByUsername,
+        Page<ContractDto> contractPage = contractRepository.searchByCriteria(query, assignedStaffUsername, createdByUsername,
                         createDateStart, createDateEnd, lastUpdateStart, lastUpdateEnd, pageable)
                 .map(contract -> mapper.map(contract, ContractDto.class));
+        return PagedResponse.from(contractPage, contractPage.getContent());
     }
 
     private static Pageable getPageableContract(int page, int size, String sortBy, boolean sortAsc) {
@@ -232,7 +241,7 @@ public class ContractServiceImpl implements ContractService {
                 csvContent.append(escapeCsvField(contract.getAssignedStaff().getUsername())).append(",");
                 csvContent.append(contract.getCreatedDate() != null ? contract.getCreatedDate().toString() : "").append(",");
                 csvContent.append(contract.getCreatedBy() != null ? escapeCsvField(contract.getCreatedBy().getUsername()) : "").append(",");
-                csvContent.append(contract.getLastUpdateDate() != null ? contract.getLastUpdateDate().toString() : "").append(",");
+                csvContent.append(contract.getLastUpdatedDate() != null ? contract.getLastUpdatedDate().toString() : "").append(",");
                 csvContent.append(contract.getLastUpdatedBy() != null ? escapeCsvField(contract.getLastUpdatedBy().getUsername()) : "").append("\n");
             }
 
@@ -247,4 +256,24 @@ public class ContractServiceImpl implements ContractService {
     private String escapeCsvField(String field) {
         return CsvUtils.escapeCsvField(field);
     }
+
+    @Override
+    public PagedResponse<InvoiceDto> getInvoicesByContractId(String contractId, int page, int size, String sortBy, boolean sortAsc) {
+        return invoiceService.getInvoiceByContractId(contractId, page, size, sortBy, sortAsc);
+    }
+
+    @Override
+    public PagedResponse<ContractDto> getContractsByCustomerId(String customerId, int page, int size, String sortBy, boolean sortAsc) {
+        if (customerId == null || !customerRepository.existsById(customerId)) {
+            throw new RuntimeException("Customer not found with id: " + customerId);
+        }
+
+        Pageable pageable = getPageableContract(page, size, sortBy, sortAsc);
+        Page<ContractDto> contractPage = contractRepository.getContractsByCustomerIdAndInvoiceID(
+                customerId, pageable)
+                .map(contract -> mapper.map(contract, ContractDto.class));
+        return PagedResponse.from(contractPage, contractPage.getContent());
+    }
+
+
 }

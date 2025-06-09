@@ -94,6 +94,7 @@ public class CustomerController {
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ApiResponse<?> searchCustomers(
             @RequestParam(required = false) String query,
+            @RequestParam(required = false) String assignedStaffUsername,
             @RequestParam(required = false) String createdByUsername,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date createDateStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date createDateEnd,
@@ -105,7 +106,7 @@ public class CustomerController {
             @RequestParam(defaultValue = "true") boolean sortAsc) {
         try {
             return ApiResponse.success(customerService.searchCustomers(
-                    query, createdByUsername,
+                    query, assignedStaffUsername, createdByUsername,
                     createDateStart, createDateEnd,
                     lastUpdateStart, lastUpdateEnd,
                     page, size, sortBy, sortAsc
@@ -138,6 +139,7 @@ public class CustomerController {
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
     public ResponseEntity<?> exportCustomers(
             @RequestParam(required = false) String query,
+            @RequestParam(required = false) String assignedStaffUsername,
             @RequestParam(required = false) String createdByUsername,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date createDateStart,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date createDateEnd,
@@ -149,7 +151,7 @@ public class CustomerController {
             @RequestParam(defaultValue = "true") boolean sortAsc) {
         try {
             Resource file = customerService.exportCustomersToCsv(
-                    query, createdByUsername,
+                    query, assignedStaffUsername, createdByUsername,
                     createDateStart, createDateEnd, lastUpdateStart, lastUpdateEnd,
                     page, size, sortBy, sortAsc);
 
@@ -161,6 +163,38 @@ public class CustomerController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to export customers: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{customerId:[a-f0-9\\-]+}/invoices")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
+    public ApiResponse<?> getInvoicesByCustomerId(
+            @PathVariable String customerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "contractName") String sortBy,
+            @RequestParam(defaultValue = "true") boolean sortAsc) {
+        try {
+            return ApiResponse.success(customerService.getInvoicesByCustomerId(
+                    customerId, page, size, sortBy, sortAsc));
+        } catch (Exception e) {
+            return ApiResponse.error(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+
+    @GetMapping("/{customerId:[a-f0-9\\-]+}/contracts")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
+    public ApiResponse<?> getContractsByCustomerId(
+            @PathVariable String customerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "contractName") String sortBy,
+            @RequestParam(defaultValue = "true") boolean sortAsc) {
+        try {
+            return ApiResponse.success(customerService.getContractsByCustomerId(
+                    customerId, page, size, sortBy, sortAsc));
+        } catch (Exception e) {
+            return ApiResponse.error(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 }

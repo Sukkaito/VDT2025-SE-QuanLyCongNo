@@ -20,8 +20,8 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
             "AND (:createdByUsername IS NULL OR u.username = :createdByUsername) " +
             "AND (:createDateStart IS NULL OR c.createdDate >= :createDateStart) " +
             "AND (:createDateEnd IS NULL OR c.createdDate <= :createDateEnd) " +
-            "AND (:lastUpdateStart IS NULL OR c.lastUpdateDate >= :lastUpdateStart) " +
-            "AND (:lastUpdateEnd IS NULL OR c.lastUpdateDate <= :lastUpdateEnd) ")
+            "AND (:lastUpdateStart IS NULL OR c.lastUpdatedDate >= :lastUpdateStart) " +
+            "AND (:lastUpdateEnd IS NULL OR c.lastUpdatedDate <= :lastUpdateEnd) ")
     Page<Contract> searchByCriteria(
             @Param("query") String query,
             @Param("assignedStaffUsername") String assignedStaffUsername,
@@ -30,5 +30,13 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
             @Param("createDateEnd") Date createDateEnd,
             @Param("lastUpdateStart") Date lastUpdateStart,
             @Param("lastUpdateEnd") Date lastUpdateEnd,
+            Pageable pageable);
+
+    @Query("SELECT c FROM Contract c " +
+            "LEFT JOIN Invoice i ON i.contract.contractId = c.contractId " +
+            "LEFT JOIN Customer cu ON i.customer.customerId = cu.customerId " +
+            "WHERE cu.customerId = :customerId")
+    Page<Contract> getContractsByCustomerIdAndInvoiceID(
+            String customerId,
             Pageable pageable);
 }

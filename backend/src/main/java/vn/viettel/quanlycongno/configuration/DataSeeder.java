@@ -184,4 +184,26 @@ public class DataSeeder {
             }
         };
     }
+
+    @Bean
+    public CommandLineRunner dataFeeder() {
+        return args -> {
+            boolean DISABLED = true; // Change this to perform data feeding
+            if (DISABLED) return;
+            logger.atInfo().log("Data feeder is running...");
+            // This method can be used to run any additional data seeding logic
+            // For example, you can call dataLoaderProd() or dataLoaderDev() here
+            // based on your requirements.
+            Role staffRole = roleRepository.findByRoleName(RoleEnum.STAFF)
+                    .orElseThrow(() -> new RuntimeException("Staff role not found"));
+
+            for (int i = 3; i < 10; ++i) {
+                Staff staff = new Staff("staff" + i,
+                        encoder.encode("staff123"),
+                        staffRole); // Create a staff member with default credentials
+                staffRepository.save(staff);
+                logger.atInfo().log("Default staff account created with username 'staff" + i + "' and password 'staff123'.");
+            }
+        };
+    }
 }

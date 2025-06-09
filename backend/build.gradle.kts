@@ -34,6 +34,12 @@ dependencies {
 	// https://mvnrepository.com/artifact/org.apache.poi/poi
 	implementation("org.apache.poi:poi:5.4.1")
 	implementation("org.apache.poi:poi-ooxml:5.4.1")
+	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api
+	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl
+	implementation("io.jsonwebtoken:jjwt-impl:0.12.6")
+	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson
+	implementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	developmentOnly("org.springframework.boot:spring-boot-docker-compose")

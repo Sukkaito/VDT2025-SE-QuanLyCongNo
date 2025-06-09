@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import vn.viettel.quanlycongno.dto.InvoiceDto;
+import vn.viettel.quanlycongno.dto.base.PagedResponse;
 import vn.viettel.quanlycongno.entity.Invoice;
 import vn.viettel.quanlycongno.entity.Contract;
 import vn.viettel.quanlycongno.entity.Customer;
@@ -42,11 +43,12 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final AuthenticationService authenticationService;
     private final ModelMapper mapper;
 
-    public Page<InvoiceDto> getAllInvoices(int page, int size, String sortBy, boolean sortAsc) {
+    public PagedResponse<InvoiceDto> getAllInvoices(int page, int size, String sortBy, boolean sortAsc) {
         Pageable pageable = getPageableInvoice(page, size, sortBy, sortAsc);
 
-        return invoiceRepository.findAll(pageable)
+        Page<InvoiceDto> invoicePage =  invoiceRepository.findAll(pageable)
                 .map(invoice -> mapper.map(invoice, InvoiceDto.class));
+        return PagedResponse.from(invoicePage, invoicePage.getContent());
     }
 
     public InvoiceDto getInvoiceById(String id) {
@@ -107,7 +109,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceRepository.deleteById(invoiceId);
     }
 
-    public Page<InvoiceDto> searchInvoices(
+    public PagedResponse<InvoiceDto> searchInvoices(
             String query,
             String staffUsername,
             String contractId,
@@ -125,11 +127,12 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         Pageable pageable = getPageableInvoice(page, size, sortBy, sortAsc);
 
-        return invoiceRepository.searchByCriteria(
+        Page<InvoiceDto> invoicePage = invoiceRepository.searchByCriteria(
                         query, staffUsername, contractId, customerId, createdByUsername,
                         invoiceDateStart, invoiceDateEnd, dueDateStart, dueDateEnd,
                         minAmount, maxAmount, currencyType, department, pageable)
                 .map(invoice -> mapper.map(invoice, InvoiceDto.class));
+        return PagedResponse.from(invoicePage, invoicePage.getContent());
     }
 
     private static Pageable getPageableInvoice(int page, int size, String sortBy, boolean sortAsc) {
@@ -305,5 +308,29 @@ public class InvoiceServiceImpl implements InvoiceService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to export invoices to CSV", e);
         }
+    }
+
+    @Override
+    public PagedResponse<InvoiceDto> getInvoiceByContractId(String contractId, int page, int size, String sortBy, boolean sortAsc) {
+        if (contractId == null || !contractRepository.existsById(contractId)) {
+            throw new RuntimeException("Contract not found with id: " + contractId);
+        }
+
+        Pageable pageable = getPageableInvoice(page, size, sortBy, sortAsc);
+        Page<InvoiceDto> invoicePage = invoiceRepository.findByContract_ContractId(contractId, pageable)
+                .map(invoice -> mapper.map(invoice, InvoiceDto.class));
+        return PagedResponse.from(invoicePage, invoicePage.getContent());
+    }
+
+    @Override
+    public PagedResponse<InvoiceDto> getInvoiceByCustomerId(String customerId, int page, int size, String sortBy, boolean sortAsc) {
+        if (customerId == null || !customerRepository.existsById(customerId)) {
+            throw new RuntimeException("Customer not found with id: " + customerId);
+        }
+
+        Pageable pageable = getPageableInvoice(page, size, sortBy, sortAsc);
+        Page<InvoiceDto> invoicePage = invoiceRepository.findByCustomer_CustomerId(customerId, pageable)
+                .map(invoice -> mapper.map(invoice, InvoiceDto.class));
+        return PagedResponse.from(invoicePage, invoicePage.getContent());
     }
 }
