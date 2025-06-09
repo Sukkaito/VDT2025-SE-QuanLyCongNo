@@ -1,0 +1,28 @@
+services:
+  mariadb-common:
+    image: 'mariadb:latest'
+    container_name: 'mariadb-common'
+    environment:
+      - 'MARIADB_DATABASE=mydatabase'
+      - 'MARIADB_PASSWORD=password'
+      - 'MARIADB_ROOT_PASSWORD=verysecret'
+      - 'MARIADB_USER=myuser'
+    ports:
+      - '3306:3306'
+    networks:
+        - 'mariadb-network'
+  mariadb-stress-test:
+    image: 'mariadb:latest'
+    container_name: 'mariadb-stress-test'
+    environment:
+      - 'MARIADB_DATABASE=mydatabase'
+      - 'MARIADB_PASSWORD=password'
+      - 'MARIADB_ROOT_PASSWORD=verysecret'
+      - 'MARIADB_USER=myuser'
+    ports:
+      - '3305:3306'
+    networks:
+      - 'mariadb-network'
+networks:
+  mariadb-network:
+    driver: 'bridge'
