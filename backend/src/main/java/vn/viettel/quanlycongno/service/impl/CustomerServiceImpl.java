@@ -102,6 +102,10 @@ public class CustomerServiceImpl implements CustomerService {
         if (customerDto.getAssignedStaffUsername() != null) {
             assignedStaff = staffRepository.findByUsername(customerDto.getAssignedStaffUsername())
                     .orElseThrow(() -> new RuntimeException("Assigned staff not found"));
+            if (!customer.getAssignedStaff().getUsername().equals(assignedStaff.getUsername()) &&
+                    !authenticationService.isAdmin()) {
+                throw new RuntimeException("Only admin can change assigned staff for customers");
+            }
         }
         Staff lastUpdatedBy = staffRepository.findByUsername(authenticationService.getCurrentUsername())
                 .orElseThrow(() -> new RuntimeException("Last updated by staff not found"));

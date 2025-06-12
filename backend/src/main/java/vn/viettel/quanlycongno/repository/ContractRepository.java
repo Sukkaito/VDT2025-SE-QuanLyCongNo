@@ -32,11 +32,12 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
             @Param("lastUpdateEnd") Date lastUpdateEnd,
             Pageable pageable);
 
-    @Query("SELECT c FROM Contract c " +
+    @Query("SELECT DISTINCT c FROM Contract c " +
             "LEFT JOIN Invoice i ON i.contract.contractId = c.contractId " +
-            "LEFT JOIN Customer cu ON i.customer.customerId = cu.customerId " +
-            "WHERE cu.customerId = :customerId")
+            "WHERE i.customer.customerId = :customerId")
     Page<Contract> getContractsByCustomerIdAndInvoiceID(
-            String customerId,
+            @Param("customerId") String customerId,
             Pageable pageable);
+
+    boolean existsByContractIdAndAssignedStaffId(String contractId, String userid);
 }

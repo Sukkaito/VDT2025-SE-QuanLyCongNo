@@ -123,16 +123,14 @@ public interface ContractService {
                                          int page, int size, String sortBy, boolean sortAsc);
 
     /**
-     * Retrieves all invoices associated with a specific contract ID.
+     * Retrieves all contracts associated with a specific customer ID.
      *
-     * @param contractId the ID of the contract
+     * @param customerId the ID of the customer
      * @param page the page number to retrieve
-     * @param size the number of invoices per page
+     * @param size the number of contracts per page
      * @param sortBy the field to sort by
      * @param sortAsc true for ascending order, false for descending order
-     * @return a paginated list of InvoiceDto objects associated with the contract
+     * @return a paginated list of ContractDto objects associated with the customer
      */
-    PagedResponse<InvoiceDto> getInvoicesByContractId(String contractId, int page, int size, String sortBy, boolean sortAsc);
-
     PagedResponse<ContractDto> getContractsByCustomerId(String customerId, int page, int size, String sortBy, boolean sortAsc);
 }

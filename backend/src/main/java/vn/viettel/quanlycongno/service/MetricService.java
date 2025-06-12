@@ -21,4 +21,20 @@ public interface MetricService {
      * @return List of staff statistics
      */
     List<StaffStatDTO> getTopStaffAllTime(int limit);
+
+    /**
+     * Get total count of contracts for a specific period
+     * @param startDate The start date for filtering (inclusive)
+     * @param endDate The end date for filtering (exclusive)
+     * @return Total count of contracts
+     */
+    Long getTotalContractsForPeriod(String startDate, String endDate);
+
+    /**
+     * Get total count of invoices for a specific period
+     * @param startDate The start date for filtering (inclusive)
+     * @param endDate The end date for filtering (exclusive)
+     * @return Total count of invoices
+     */
+    Long getTotalInvoicesForPeriod(String startDate, String endDate);
 }

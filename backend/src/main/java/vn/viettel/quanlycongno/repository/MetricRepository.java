@@ -1,10 +1,15 @@
 package vn.viettel.quanlycongno.repository;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-public interface StaffMetricRepository {
+public interface MetricRepository {
     /**
      * Get top staff with most contracts and invoices for a specific period
      * @param limit The number of staff to return
@@ -23,16 +28,18 @@ public interface StaffMetricRepository {
     /**
      * Get total count of contracts after a specific date
      * @param startDate The start date for filtering (inclusive)
+     * @param endDate The end date for filtering (exclusive)
      * @return Total count of contracts
      */
-    Long getTotalContractsForPeriod(LocalDate startDate);
+    Long getTotalContractsForPeriod(LocalDate startDate, LocalDate endDate);
     
     /**
      * Get total count of invoices after a specific date
      * @param startDate The start date for filtering (inclusive)
+     * @param endDate The end date for filtering (exclusive)
      * @return Total count of invoices
      */
-    Long getTotalInvoicesForPeriod(LocalDate startDate);
+    Long getTotalInvoicesForPeriod(LocalDate startDate, LocalDate endDate);
     
     /**
      * Get total count of contracts for all time

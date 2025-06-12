@@ -32,7 +32,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, String> {
             "AND (:minAmount IS NULL OR i.totalAmountWithVat >= :minAmount) " +
             "AND (:maxAmount IS NULL OR i.totalAmountWithVat <= :maxAmount) " +
             "AND (:currencyType IS NULL OR i.currencyType = :currencyType) " +
-            "AND (:department IS NULL OR i.department = :department)")
+            "AND (:department IS NULL OR LOWER(i.department) LIKE LOWER(CONCAT('%', :department, '%')))")
     Page<Invoice> searchByCriteria(
             @Param("query") String query,
             @Param("staffUsername") String staffUsername,
@@ -56,4 +56,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, String> {
     Page<Invoice> findByContract_ContractId(String contractId, Pageable pageable);
 
     Page<Invoice> findByCustomer_CustomerId(String customerId, Pageable pageable);
+
+    boolean existsByInvoiceIdAndStaffId(String invoiceId, String username);
+
 }

@@ -13,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 import vn.viettel.quanlycongno.service.StaffService;
 
@@ -35,11 +35,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF protection
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Allow public access to /login endpoint
+
                         .anyRequest().authenticated() // Require authentication for all other requests
                 )
-                .userDetailsService(staffService) // Set custom UserDetailsService
+//                .userDetailsService(staffService) // Set custom UserDetailsService
                 .formLogin(AbstractHttpConfigurer::disable) // Disable form login for now
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT authentication filter
+                .addFilterBefore(jwtAuthenticationFilter, AnonymousAuthenticationFilter.class); // Add JWT authentication filter
 //                .httpBasic(Customizer.withDefaults()); // Enable basic authentication
 
         return http.build();

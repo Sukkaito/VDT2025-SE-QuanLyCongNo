@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import vn.viettel.quanlycongno.dto.ContractDto;
 import vn.viettel.quanlycongno.dto.CustomerDto;
 import vn.viettel.quanlycongno.dto.InvoiceDto;
+import vn.viettel.quanlycongno.dto.StaffDto;
 import vn.viettel.quanlycongno.entity.Contract;
 import vn.viettel.quanlycongno.entity.Customer;
 import vn.viettel.quanlycongno.entity.Invoice;

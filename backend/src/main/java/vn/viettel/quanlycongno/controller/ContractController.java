@@ -18,12 +18,14 @@ import java.util.Objects;
 import vn.viettel.quanlycongno.dto.ContractDto;
 import vn.viettel.quanlycongno.dto.base.ApiResponse;
 import vn.viettel.quanlycongno.service.ContractService;
+import vn.viettel.quanlycongno.service.InvoiceService;
 
 @RestController
 @RequestMapping("/api/contracts")
 @AllArgsConstructor
 public class ContractController {
     private final ContractService contractService;
+    private final InvoiceService invoiceService;
 
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_STAFF')")
@@ -171,7 +173,7 @@ public class ContractController {
             @RequestParam(defaultValue = "contractName") String sortBy,
             @RequestParam(defaultValue = "true") boolean sortAsc) {
         try {
-            return ApiResponse.success(contractService.getInvoicesByContractId(
+            return ApiResponse.success(invoiceService.getInvoiceByContractId(
                     contractId, page, size, sortBy, sortAsc));
         } catch (Exception e) {
             return ApiResponse.error(HttpStatus.NOT_FOUND, e.getMessage());

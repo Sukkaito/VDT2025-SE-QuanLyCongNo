@@ -39,4 +39,10 @@ public interface AuthenticationService {
      * @return The username of the current user.
      */
     String getCurrentUsername();
+
+    /**
+     * See if the current authentication context is ADMIN
+     * @return true if is ADMIN, false otherwise
+     */
+    boolean isAdmin();
 }

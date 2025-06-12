@@ -5,9 +5,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import vn.viettel.quanlycongno.constant.RoleEnum;
-import vn.viettel.quanlycongno.entity.Contract;
-import vn.viettel.quanlycongno.entity.Customer;
-import vn.viettel.quanlycongno.entity.Invoice;
 import vn.viettel.quanlycongno.entity.Staff;
 import vn.viettel.quanlycongno.repository.ContractRepository;
 import vn.viettel.quanlycongno.repository.CustomerRepository;
@@ -15,6 +12,7 @@ import vn.viettel.quanlycongno.repository.InvoiceRepository;
 import vn.viettel.quanlycongno.repository.StaffRepository;
 import vn.viettel.quanlycongno.service.AuthenticationService;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Service("authenticationService")
@@ -43,12 +41,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (isAdmin()) return true;
 
-        String username = getCurrentUsername();
+        String userid = ((Staff) Objects.requireNonNull(getAuthentication()).getPrincipal()).getId();
 
-        // Check if staff is the assigned staff for the contract
-        Optional<Contract> contractOpt = contractRepository.findById(contractId);
-        return contractOpt.filter(contract -> username.equals(contract.getAssignedStaff().getUsername())).isPresent();
-
+        return contractRepository.existsByContractIdAndAssignedStaffId(contractId, userid);
     }
 
     /**
@@ -61,11 +56,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (isAdmin()) return true;
 
-        String username = getCurrentUsername();
+        String userid = ((Staff) Objects.requireNonNull(getAuthentication()).getPrincipal()).getId();
 
         // Check if staff is the assigned staff for the invoice
-        Optional<Invoice> optInvoice = invoiceRepository.findById(invoiceId);
-        return optInvoice.filter(invoice -> username.equals(invoice.getStaff().getUsername())).isPresent();
+        return invoiceRepository.existsByInvoiceIdAndStaffId(invoiceId, userid);
     }
 
     /**
@@ -77,11 +71,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (isAdmin()) return true;
 
-        String username = getCurrentUsername();
+        String userId = ((Staff) Objects.requireNonNull(getAuthentication()).getPrincipal()).getId();
 
         // Check if staff is the assigned for the customer
-        Optional<Customer> optCustomer = customerRepository.findById(customerId);
-        return optCustomer.filter(contract -> username.equals(contract.getAssignedStaff().getUsername())).isPresent();
+        return customerRepository.existsByCustomerIdAndAssignedStaffId(customerId, userId);
     }
 
     /**
@@ -96,15 +89,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return authentication.getName();
     }
 
-    private static Authentication getAuthentication() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
-        }
-        return authentication;
-    }
-
-    private boolean isAdmin() {
+    /**
+     * Checks if the current authenticated user has admin privileges.
+     * @return true if the user is an admin, false otherwise.
+     */
+    public boolean isAdmin() {
         // Get current authenticated user
         Authentication authentication = getAuthentication();
         if (authentication == null) return false;
@@ -116,5 +105,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // Check if staff is admin
         return staff.getRole().getRoleName().equals(RoleEnum.ADMIN);
+    }
+
+    private static Authentication getAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        return authentication;
     }
 }

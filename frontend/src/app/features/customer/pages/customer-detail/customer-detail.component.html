@@ -1,0 +1,558 @@
+<div class="container mx-auto px-4 py-6">
+  <!-- Loading State -->
+  <div *ngIf="loading && !customer" class="flex items-center justify-center h-64">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <p class="ml-3 text-gray-600">Loading customer details...</p>
+  </div>
+
+  <!-- Customer Detail Content -->
+  <div *ngIf="customer" class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <button
+            (click)="goBack()"
+            class="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
+          >
+            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Customers
+          </button>
+          <div class="h-6 w-px bg-gray-300"></div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ customer.customerName }}</h1>
+            <p class="text-gray-600">Tax Code: {{ customer.taxCode }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-3">
+          <button
+            *ngIf="!isEditing"
+            (click)="toggleEdit()"
+            class="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-100 hover:text-blue-800 transition-all duration-200"
+          >
+            <svg class="h-4 w-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit Customer
+          </button>
+          
+          <div *ngIf="isEditing" class="flex space-x-2">
+            <button
+              (click)="toggleEdit()"
+              class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              (click)="saveChanges()"
+              [disabled]="loading"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all duration-200"
+            >
+              {{ loading ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="border-b border-gray-200">
+        <nav class="flex space-x-8 px-6">
+          <button
+            (click)="setActiveTab('overview')"
+            [class.border-blue-500]="activeTab === 'overview'"
+            [class.text-blue-600]="activeTab === 'overview'"
+            [class.text-gray-500]="activeTab !== 'overview'"
+            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 hover:text-gray-700"
+          >
+            Overview
+          </button>
+          <button
+            (click)="setActiveTab('contracts')"
+            [class.border-blue-500]="activeTab === 'contracts'"
+            [class.text-blue-600]="activeTab === 'contracts'"
+            [class.text-gray-500]="activeTab !== 'contracts'"
+            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 hover:text-gray-700"
+          >
+            Contracts ({{ contractsTotalItems }})
+          </button>
+          <button
+            (click)="setActiveTab('invoices')"
+            [class.border-blue-500]="activeTab === 'invoices'"
+            [class.text-blue-600]="activeTab === 'invoices'"
+            [class.text-gray-500]="activeTab !== 'invoices'"
+            class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 hover:text-gray-700"
+          >
+            Invoices ({{ invoicesTotalItems }})
+          </button>
+        </nav>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-6">
+        <!-- Overview Tab -->
+        <div *ngIf="activeTab === 'overview'">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Basic Information -->
+            <div class="space-y-6">
+              <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                Basic Information
+              </h3>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                  <input
+                    *ngIf="isEditing"
+                    type="text"
+                    [(ngModel)]="editForm.customerName"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                  <p *ngIf="!isEditing" class="text-gray-900">{{ customer.customerName }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Tax Code</label>
+                  <input
+                    *ngIf="isEditing"
+                    type="text"
+                    [(ngModel)]="editForm.taxCode"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                  <p *ngIf="!isEditing" class="text-gray-900">{{ customer.taxCode }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Abbreviation Name</label>
+                  <input
+                    *ngIf="isEditing"
+                    type="text"
+                    [(ngModel)]="editForm.abbreviationName"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                  <p *ngIf="!isEditing" class="text-gray-900">{{ customer.abbreviationName || 'Not specified' }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Assigned Staff</label>
+                  <app-staff-dropdown
+                    *ngIf="isEditing"
+                    [selectedStaff]="editForm.assignedStaffUsername"
+                    [required]="false"
+                    placeholder="Select staff member (optional)..."
+                    (staffSelected)="onEditStaffSelected($event)"
+                  ></app-staff-dropdown>
+                  <p *ngIf="!isEditing" class="text-gray-900">{{ customer.assignedStaffUsername || 'Not assigned' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metadata Information -->
+            <div class="space-y-6">
+              <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
+                Record Information
+              </h3>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Customer ID</label>
+                  <p class="text-gray-900 font-mono">{{ customer.customerId }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Created Date</label>
+                  <p class="text-gray-900">{{ customer.createdDate | date:'MMM dd, yyyy HH:mm' }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Last Updated</label>
+                  <p class="text-gray-900">{{ customer.lastUpdateDate | date:'MMM dd, yyyy HH:mm' }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Created By</label>
+                  <p class="text-gray-900">{{ customer.createdByUsername || 'System' }}</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Last Updated By</label>
+                  <p class="text-gray-900">{{ customer.lastUpdatedByUsername || 'System' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Staff History -->
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2 mb-4">
+              Staff Assignment History
+            </h3>
+            <button
+                (click)="openStaffAssignmentModal()"
+                class="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
+              >
+                <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Assign New Staff
+            </button>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4">
+            <!-- Current Staff -->
+            <div *ngIf="customer.assignedStaffUsername" class="mb-4">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Currently Assigned:</h4>
+              <span class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-800 border-2 border-green-300">
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {{ customer.assignedStaffUsername }}
+                <span class="ml-2 text-xs text-green-600">(Active)</span>
+              </span>
+            </div>
+
+            <!-- Historical Staff -->
+            <div *ngIf="customer.usedToBeHandledByStaffUsernames && customer.usedToBeHandledByStaffUsernames.length > 0">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Assignment History:</h4>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  *ngFor="let staff of customer.usedToBeHandledByStaffUsernames"
+                  (click)="assignStaffFromHistory(staff)"
+                  [disabled]="isCurrentlyAssigned(staff)"
+                  [class.bg-green-100]="isCurrentlyAssigned(staff)"
+                  [class.text-green-800]="isCurrentlyAssigned(staff)"
+                  [class.border-green-300]="isCurrentlyAssigned(staff)"
+                  [class.bg-blue-50]="!isCurrentlyAssigned(staff)"
+                  [class.text-blue-700]="!isCurrentlyAssigned(staff)"
+                  [class.border-blue-200]="!isCurrentlyAssigned(staff)"
+                  [class.hover:bg-blue-100]="!isCurrentlyAssigned(staff)"
+                  [class.hover:border-blue-300]="!isCurrentlyAssigned(staff)"
+                  [class.cursor-not-allowed]="isCurrentlyAssigned(staff)"
+                  [class.cursor-pointer]="!isCurrentlyAssigned(staff)"
+                  class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all duration-200 disabled:opacity-60"
+                  [title]="isCurrentlyAssigned(staff) ? 'Currently assigned' : 'Click to reassign'"
+                >
+                  <svg *ngIf="isCurrentlyAssigned(staff)" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <svg *ngIf="!isCurrentlyAssigned(staff)" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  {{ staff }}
+                  <span *ngIf="isCurrentlyAssigned(staff)" class="ml-2 text-xs">(Current)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- No History Message -->
+            <div *ngIf="!customer.usedToBeHandledByStaffUsernames || customer.usedToBeHandledByStaffUsernames.length === 0" 
+                  class="text-center py-4">
+              <svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p class="text-gray-500 text-sm">No staff assignment history available</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Contracts Tab -->
+        <div *ngIf="activeTab === 'contracts'">
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-medium text-gray-900">Related Contracts</h3>
+              <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-500">{{ contractsTotalItems }} contract(s) found</span>
+                <button
+                  (click)="openCreateInvoiceModal()"
+                  class="px-3 py-1 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200"
+                  title="Create invoice for this customer"
+                >
+                  <svg class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Create Invoice
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="contracts.length === 0" class="text-center py-8">
+              <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p class="text-gray-500">No contracts found for this customer</p>
+            </div>
+
+            <div *ngIf="contracts.length > 0" class="overflow-hidden border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contract Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Staff</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created Date</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let contract of contracts" class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600" 
+                           (click)="navigateToContract(contract)">
+                        {{ contract.contractName }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">{{ contract.assignedStaffUsername }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">{{ contract.createdDate | date:'MMM dd, yyyy' }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div class="flex justify-end gap-2">
+                        <button
+                          (click)="openCreateInvoiceModal(contract)"
+                          class="inline-flex items-center px-3 py-1 text-xs font-medium text-green-600 bg-green-100 border border-green-300 rounded-md hover:bg-green-200 hover:text-green-800 transition-all duration-200"
+                          title="Create invoice for this contract"
+                        >
+                          <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          Create Invoice
+                        </button>
+                        <button
+                          (click)="navigateToContract(contract)"
+                          class="text-blue-600 hover:text-blue-900 font-medium"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Contracts Pagination -->
+            <div *ngIf="contractsTotalPages > 1" class="flex justify-center mt-4">
+              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <button
+                  (click)="onContractsPageChange(contractsPage - 1)"
+                  [disabled]="contractsPage === 1"
+                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  *ngFor="let page of [].constructor(contractsTotalPages); let i = index"
+                  (click)="onContractsPageChange(i + 1)"
+                  [class.bg-blue-50]="contractsPage === i + 1"
+                  [class.border-blue-500]="contractsPage === i + 1"
+                  [class.text-blue-600]="contractsPage === i + 1"
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  {{ i + 1 }}
+                </button>
+                <button
+                  (click)="onContractsPageChange(contractsPage + 1)"
+                  [disabled]="contractsPage === contractsTotalPages"
+                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+
+        <!-- Invoices Tab -->
+        <div *ngIf="activeTab === 'invoices'">
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-medium text-gray-900">Related Invoices</h3>
+              <span class="text-sm text-gray-500">{{ invoicesTotalItems }} invoice(s) found</span>
+            </div>
+
+            <div *ngIf="invoices.length === 0" class="text-center py-8">
+              <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <p class="text-gray-500">No invoices found for this customer</p>
+            </div>
+
+            <div *ngIf="invoices.length > 0" class="overflow-hidden border border-gray-200 rounded-lg">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice Number</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Currency</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr *ngFor="let invoice of invoices" 
+                      class="hover:bg-gray-50 cursor-pointer transition-colors duration-200" 
+                      (click)="navigateToInvoice(invoice)"
+                      [title]="'Click to view invoice details'">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                        {{ invoice.invoiceSymbol }}-{{ invoice.invoiceNumber }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900 font-medium">
+                        {{ formatCurrency(invoice.originalAmount, invoice.currencyType) }}
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {{ invoice.currencyType }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900" [class.text-red-600]="isOverdue(invoice.dueDate)">
+                        {{ formatDate(invoice.dueDate) }}
+                        <div *ngIf="isOverdue(invoice.dueDate)" class="text-xs text-red-500">Overdue</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            [ngClass]="getInvoiceStatusClass(invoice)">
+                        {{ getInvoiceStatusText(invoice) }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            [ngClass]="getPaymentMethodClass(invoice.paymentMethod)">
+                        {{ invoice.paymentMethod }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        (click)="navigateToInvoice(invoice); $event.stopPropagation()"
+                        class="text-blue-600 hover:text-blue-900 font-medium"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Invoices Pagination -->
+            <div *ngIf="invoicesTotalPages > 1" class="flex justify-center mt-4">
+              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <button
+                  (click)="onInvoicesPageChange(invoicesPage - 1)"
+                  [disabled]="invoicesPage === 1"
+                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  *ngFor="let page of [].constructor(invoicesTotalPages); let i = index"
+                  (click)="onInvoicesPageChange(i + 1)"
+                  [class.bg-blue-50]="invoicesPage === i + 1"
+                  [class.border-blue-500]="invoicesPage === i + 1"
+                  [class.text-blue-600]="invoicesPage === i + 1"
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  {{ i + 1 }}
+                </button>
+                <button
+                  (click)="onInvoicesPageChange(invoicesPage + 1)"
+                  [disabled]="invoicesPage === invoicesTotalPages"
+                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff Assignment Modal -->
+  <div *ngIf="showStaffAssignmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
+      <div class="mt-3">
+        <div class="flex items-center mb-4">
+          <svg class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900">
+            Assign New Staff
+          </h3>
+        </div>
+        
+        <form (ngSubmit)="assignNewStaff()" #staffForm="ngForm">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Staff Username *
+            </label>
+            <app-staff-dropdown
+              [selectedStaff]="newStaffUsername"
+              [required]="true"
+              placeholder="Select staff member..."
+              (staffSelected)="onStaffSelected($event)"
+            ></app-staff-dropdown>
+          </div>
+
+          <div *ngIf="customer?.assignedStaffUsername" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div class="flex items-center">
+              <svg class="h-5 w-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div>
+                <p class="text-sm text-yellow-800">
+                  <strong>{{ customer?.assignedStaffUsername == null ? 'Unassigned' : customer?.assignedStaffUsername }}</strong> is currently assigned.
+                </p>
+                <p class="text-xs text-yellow-600">
+                  Assigning a new staff will replace the current assignment.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <button
+              type="button"
+              (click)="closeStaffAssignmentModal()"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="!newStaffUsername.trim() || loading"
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {{ loading ? 'Assigning...' : 'Assign Staff' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Invoice Form Component -->
+  <app-add-invoice-form
+    [showModal]="showCreateInvoiceModal"
+    [isEditMode]="false"
+    [loading]="loading"
+    [selectedInvoice]="null"
+    [prefilledData]="prefilledInvoiceData"
+    (closeModal)="closeCreateInvoiceModal()"
+    (submitForm)="onInvoiceFormSubmit($event)">
+  </app-add-invoice-form>
+</div>

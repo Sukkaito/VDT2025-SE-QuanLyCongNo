@@ -52,7 +52,7 @@ public class InvoiceController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+//    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ApiResponse<?> createInvoice(@Valid @RequestBody InvoiceDto invoiceDto) {
         try {

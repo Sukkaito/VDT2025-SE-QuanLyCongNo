@@ -154,7 +154,7 @@ public class ContractServiceImpl implements ContractService {
                 .map(Field::getName)
                 .collect(Collectors.toSet());
 
-        allowedSortFields.addAll(Set.of("assignedStaff", "createdBy", "lastUpdatedBy"));
+        allowedSortFields.addAll(Set.of("contractName, assignedStaff", "createdBy", "lastUpdatedBy"));
 
         // Validate and default if invalid
         String validatedSortField = allowedSortFields.contains(sortBy) ? sortBy : "contractName";
@@ -255,11 +255,6 @@ public class ContractServiceImpl implements ContractService {
     // Helper method to escape CSV fields that might contain commas
     private String escapeCsvField(String field) {
         return CsvUtils.escapeCsvField(field);
-    }
-
-    @Override
-    public PagedResponse<InvoiceDto> getInvoicesByContractId(String contractId, int page, int size, String sortBy, boolean sortAsc) {
-        return invoiceService.getInvoiceByContractId(contractId, page, size, sortBy, sortAsc);
     }
 
     @Override

@@ -33,4 +33,6 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
             @Param("lastUpdateStart") Date lastUpdateStart,
             @Param("lastUpdateEnd") Date lastUpdateEnd,
             Pageable pageable);
+
+    boolean existsByCustomerIdAndAssignedStaffId(String customerId, String userId);
 }

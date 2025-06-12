@@ -59,7 +59,6 @@ public class CustomerController {
         try {
             return ApiResponse.success(customerService.saveCustomer(customerDto), "Customer created successfully");
         } catch (Exception e) {
-            e.printStackTrace();
             return ApiResponse.error(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
