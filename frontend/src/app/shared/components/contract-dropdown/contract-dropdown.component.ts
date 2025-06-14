@@ -105,7 +105,19 @@ export class ContractDropdownComponent implements OnInit, OnDestroy, OnChanges {
   private setSelectedContractName(): void {
     if (this.selectedContract) {
       const contract = this.contractList.find(c => c.contractId === this.selectedContract);
-      this.selectedContractName = contract ? contract.contractName : this.selectedContract;
+      if (contract) {
+        this.selectedContractName = contract.contractName;
+      } else {
+        this.contractService.getById(this.selectedContract).subscribe({
+          next: (response) => {
+            if (response.status === 200 && response.data) {
+              this.selectedContractName = response.data.contractName;
+            } else {
+              this.selectedContractName = this.selectedContract || '';
+            }
+          }
+        });
+      }
     }
   }
 

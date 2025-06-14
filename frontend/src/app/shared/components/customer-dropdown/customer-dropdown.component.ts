@@ -105,7 +105,20 @@ export class CustomerDropdownComponent implements OnInit, OnDestroy, OnChanges {
   private setSelectedCustomerName(): void {
     if (this.selectedCustomer) {
       const customer = this.customerList.find(c => c.customerId === this.selectedCustomer);
-      this.selectedCustomerName = customer ? customer.customerName : this.selectedCustomer;
+      
+      if (customer) {
+        this.selectedCustomerName = customer.customerName;
+      } else {
+        this.customerService.getById(this.selectedCustomer).subscribe({
+          next: (response) => {
+            if (response.status === 200 && response.data) {
+              this.selectedCustomerName = response.data.customerName;
+            } else {
+              this.selectedCustomerName = this.selectedCustomer || '';
+            }
+          }
+        })
+      }
     }
   }
 

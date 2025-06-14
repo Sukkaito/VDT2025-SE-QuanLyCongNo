@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import vn.viettel.quanlycongno.entity.Contract;
 
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public interface ContractRepository extends JpaRepository<Contract, String> {
@@ -40,4 +41,6 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
             Pageable pageable);
 
     boolean existsByContractIdAndAssignedStaffId(String contractId, String userid);
+
+    List<Contract> findAllByOrderByCreatedDate();
 }

@@ -1,6 +1,7 @@
 package vn.viettel.quanlycongno.repository.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import vn.viettel.quanlycongno.repository.MetricRepository;
@@ -114,12 +115,14 @@ public class MetricRepositoryImpl implements MetricRepository {
     }
 
     @Override
+    @Cacheable(value = "totalContractsAllTime")
     public Long getTotalContractsAllTime() {
         String sql = "SELECT COUNT(*) FROM contracts";
         return jdbcTemplate.queryForObject(sql, Long.class);
     }
 
     @Override
+    @Cacheable(value = "totalInvoicesAllTime")
     public Long getTotalInvoicesAllTime() {
         String sql = "SELECT COUNT(*) FROM invoices";
         return jdbcTemplate.queryForObject(sql, Long.class);

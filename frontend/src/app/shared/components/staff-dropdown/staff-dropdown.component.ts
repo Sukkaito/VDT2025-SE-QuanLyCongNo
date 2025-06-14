@@ -105,7 +105,19 @@ export class StaffDropdownComponent implements OnInit, OnDestroy, OnChanges {
   private setSelectedStaffName(): void {
     if (this.selectedStaff) {
       const staff = this.staffList.find(s => s.username === this.selectedStaff);
-      this.selectedStaffName = staff ? staff.username : this.selectedStaff;
+      if (staff) {
+        this.selectedStaffName = staff.username;
+      } else {
+        this.staffService.getById(this.selectedStaff).subscribe({
+          next: (response) => {
+            if (response.status === 200 && response.data) {
+              this.selectedStaffName = response.data.username;
+            } else {
+              this.selectedStaffName = this.selectedStaff || '';
+            }
+          }
+        })
+      }
     }
   }
 

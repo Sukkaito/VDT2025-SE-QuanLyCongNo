@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Service("MetricServiceImpl")
 @RequiredArgsConstructor
 public class MetricServiceImpl implements MetricService {
 
@@ -21,7 +21,7 @@ public class MetricServiceImpl implements MetricService {
 
     @Override
     @Cacheable(value = "topStaffForMonth", key = "#limit")
-    @Scheduled(cron = "0 */10 * * * *")
+//    @Scheduled(cron = "0 */10 * * * *")
     public List<StaffStatDTO> getTopStaffForMonth(int limit) {
         LocalDate firstDayOfMonth = LocalDate.now().withDayOfMonth(1);
         
@@ -40,7 +40,7 @@ public class MetricServiceImpl implements MetricService {
 
     @Override
     @Cacheable(value = "topStaffAllTime", key = "#limit")
-    @Scheduled(cron = "0 */10 * * * *")
+//    @Scheduled(cron = "0 */10 * * * *")
     public List<StaffStatDTO> getTopStaffAllTime(int limit) {
         // Get total counts for percentage calculations
         Long totalContracts = metricRepository.getTotalContractsAllTime();
@@ -57,7 +57,7 @@ public class MetricServiceImpl implements MetricService {
 
     @Override
     @Cacheable(value = "totalContractsForPeriod", key = "#startDate+#endDate")
-    @Scheduled(cron = "0 */10 * * * *")
+//    @Scheduled(cron = "0 */10 * * * *")
     public Long getTotalContractsForPeriod(String startDate, String endDate) {
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = endDate != null ? LocalDate.parse(endDate) : null;
@@ -65,8 +65,8 @@ public class MetricServiceImpl implements MetricService {
     }
 
     @Override
-    @Cacheable(value = "totalContractsForPeriod", key = "#startDate+#endDate")
-    @Scheduled(cron = "0 */10 * * * *")
+    @Cacheable(value = "totalInvoiceForPeriod", key = "#startDate+#endDate")
+//    @Scheduled(cron = "0 */10 * * * *")
     public Long getTotalInvoicesForPeriod(String startDate, String endDate) {
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = endDate != null ? LocalDate.parse(endDate) : null;

@@ -10,6 +10,7 @@ import vn.viettel.quanlycongno.entity.Invoice;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -59,4 +60,5 @@ public interface InvoiceRepository extends JpaRepository<Invoice, String> {
 
     boolean existsByInvoiceIdAndStaffId(String invoiceId, String username);
 
+    List<Invoice> findAllByOrderByCreatedDateDesc();
 }
