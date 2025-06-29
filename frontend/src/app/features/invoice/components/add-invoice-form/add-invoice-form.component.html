@@ -1,0 +1,266 @@
+<div *ngIf="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">
+        {{ isEditMode ? 'Edit Invoice' : 'Create New Invoice' }}
+      </h3>
+      
+      <form (ngSubmit)="onSubmit()" #invoiceFormRef="ngForm">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Invoice Symbol -->
+          <div>
+            <label for="invoiceSymbol" class="block text-sm font-medium text-gray-700 mb-1">
+              Invoice Symbol *
+            </label>
+            <input
+              type="text"
+              id="invoiceSymbol"
+              name="invoiceSymbol"
+              [(ngModel)]="invoiceForm.invoiceSymbol"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Invoice Number -->
+          <div>
+            <label for="invoiceNumber" class="block text-sm font-medium text-gray-700 mb-1">
+              Invoice Number *
+            </label>
+            <input
+              type="text"
+              id="invoiceNumber"
+              name="invoiceNumber"
+              [(ngModel)]="invoiceForm.invoiceNumber"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Original Amount -->
+          <div>
+            <label for="originalAmount" class="block text-sm font-medium text-gray-700 mb-1">
+              Original Amount *
+            </label>
+            <input
+              type="number"
+              id="originalAmount"
+              name="originalAmount"
+              [(ngModel)]="invoiceForm.originalAmount"
+              required
+              step="0.01"
+              min="0"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Currency Type -->
+          <div>
+            <label for="currencyType" class="block text-sm font-medium text-gray-700 mb-1">
+              Currency *
+            </label>
+            <select
+              id="currencyType"
+              name="currencyType"
+              [(ngModel)]="invoiceForm.currencyType"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="VND">VND</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+            </select>
+          </div>
+
+          <!-- Exchange Rate -->
+          <div>
+            <label for="exchangeRate" class="block text-sm font-medium text-gray-700 mb-1">
+              Exchange Rate *
+            </label>
+            <input
+              type="number"
+              id="exchangeRate"
+              name="exchangeRate"
+              [(ngModel)]="invoiceForm.exchangeRate"
+              required
+              step="0.0001"
+              min="0"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- VAT -->
+          <div>
+            <label for="vat" class="block text-sm font-medium text-gray-700 mb-1">
+              VAT (%) *
+            </label>
+            <input
+              type="number"
+              id="vat"
+              name="vat"
+              [(ngModel)]="invoiceForm.vat"
+              required
+              step="0.01"
+              min="0"
+              max="100"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Invoice Date -->
+          <div>
+            <label for="invoiceDate" class="block text-sm font-medium text-gray-700 mb-1">
+              Invoice Date *
+            </label>
+            <input
+              type="date"
+              id="invoiceDate"
+              name="invoiceDate"
+              [(ngModel)]="invoiceForm.invoiceDate"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Due Date -->
+          <div>
+            <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">
+              Due Date *
+            </label>
+            <input
+              type="date"
+              id="dueDate"
+              name="dueDate"
+              [(ngModel)]="invoiceForm.dueDate"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Payment Method -->
+          <div>
+            <label for="paymentMethod" class="block text-sm font-medium text-gray-700 mb-1">
+              Payment Method *
+            </label>
+            <select
+              id="paymentMethod"
+              name="paymentMethod"
+              [(ngModel)]="invoiceForm.paymentMethod"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="Cash">Cash</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Check">Check</option>
+              <option value="Wire Transfer">Wire Transfer</option>
+            </select>
+          </div>
+
+          <!-- Contract ID -->
+          <div>
+            <label for="contractId" class="block text-sm font-medium text-gray-700 mb-1">
+              Contract *
+            </label>
+            <app-contract-dropdown
+              [selectedContract]="invoiceForm.contractId"
+              [required]="true"
+              placeholder="Select contract..."
+              (contractSelected)="onContractSelected($event)"
+            ></app-contract-dropdown>
+          </div>
+
+          <!-- Customer ID -->
+          <div>
+            <label for="customerId" class="block text-sm font-medium text-gray-700 mb-1">
+              Customer *
+            </label>
+            <app-customer-dropdown
+              [selectedCustomer]="invoiceForm.customerId"
+              [required]="true"
+              placeholder="Select customer..."
+              (customerSelected)="onCustomerSelected($event)"
+            ></app-customer-dropdown>
+          </div>
+
+          <!-- Project ID -->
+          <div>
+            <label for="projectId" class="block text-sm font-medium text-gray-700 mb-1">
+              Project ID *
+            </label>
+            <input
+              type="text"
+              id="projectId"
+              name="projectId"
+              [(ngModel)]="invoiceForm.projectId"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+
+          <!-- Staff Username -->
+          <div>
+            <label for="staffUsername" class="block text-sm font-medium text-gray-700 mb-1">
+              Staff Username *
+            </label>
+            <app-staff-dropdown
+              [selectedStaff]="invoiceForm.staffUsername"
+              [required]="true"
+              placeholder="Select staff member..."
+              (staffSelected)="onStaffSelected($event)"
+            ></app-staff-dropdown>
+          </div>
+
+          <!-- Department -->
+          <div>
+            <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
+              Department *
+            </label>
+            <input
+              type="text"
+              id="department"
+              name="department"
+              [(ngModel)]="invoiceForm.department"
+              required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="mt-4">
+          <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+            Notes
+          </label>
+          <textarea
+            id="notes"
+            name="notes"
+            [(ngModel)]="invoiceForm.notes"
+            rows="3"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Additional notes..."
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            type="button"
+            (click)="onCancel()"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-400 hover:text-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 ease-in-out"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="!invoiceFormRef.form.valid || loading"
+            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-800 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+          >
+            {{ loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Invoice' : 'Create Invoice') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

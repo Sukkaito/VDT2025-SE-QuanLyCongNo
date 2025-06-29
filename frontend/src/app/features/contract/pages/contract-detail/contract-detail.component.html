@@ -1,0 +1,647 @@
+<div class="container mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="mb-6">
+    <div class="flex items-center gap-4 mb-4">
+      <button
+        (click)="goBack()"
+        class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
+      >
+        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Contracts
+      </button>
+    </div>
+    
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Contract Details</h1>
+        <p class="text-gray-600">View and edit contract information and associated invoices</p>
+      </div>
+      
+      <div class="flex items-center space-x-3" *ngIf="contract">
+        <button
+          *ngIf="!isEditing"
+          (click)="toggleContractEdit()"
+          class="px-4 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-100 hover:text-blue-800 transition-all duration-200"
+        >
+          <svg class="h-4 w-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Edit Contract
+        </button>
+        
+        <div *ngIf="isEditing" class="flex space-x-2">
+          <button
+            (click)="toggleContractEdit()"
+            class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition-all duration-200"
+          >
+            Cancel
+          </button>
+          <button
+            (click)="saveContractChanges()"
+            [disabled]="loading"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all duration-200"
+          >
+            {{ loading ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading && !contract" class="flex justify-center items-center py-12">
+    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    <p class="ml-3 text-gray-600">Loading contract details...</p>
+  </div>
+
+  <!-- Contract Information -->
+  <div *ngIf="!loading && contract" class="bg-white rounded-lg shadow mb-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-900">Contract Information</h2>
+    </div>
+    <div class="px-6 py-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1">Contract ID</label>
+          <p class="text-gray-900 font-mono">{{ contract.contractId || 'N/A' }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1">Contract Name</label>
+          <input
+            *ngIf="isEditing"
+            type="text"
+            [(ngModel)]="contractEditForm.contractName"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          >
+          <p *ngIf="!isEditing" class="text-gray-900 font-medium">{{ contract.contractName }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1">Assigned Staff</label>
+          <app-staff-dropdown
+            *ngIf="isEditing"
+            [selectedStaff]="contractEditForm.assignedStaffUsername"
+            [required]="false"
+            placeholder="Select staff member (optional)..."
+            (staffSelected)="onStaffSelected($event)"
+          ></app-staff-dropdown>
+          <p *ngIf="!isEditing" class="text-gray-900">{{ contract.assignedStaffUsername || 'Not assigned' }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1">Created Date</label>
+          <p class="text-gray-900">{{ formatDate(contract.createdDate) }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1">Last Updated</label>
+          <p class="text-gray-900">{{ formatDate(contract.lastUpdatedDate) }}</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-500 mb-1">Created By</label>
+          <p class="text-gray-900">{{ contract.createdByUsername || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Associated Invoices -->
+  <div *ngIf="!loading" class="bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold text-gray-900">Associated Invoices</h2>
+        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+          {{ invoiceTotalItems }} {{ invoiceTotalItems === 1 ? 'Invoice' : 'Invoices' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Invoices Table -->
+    <div class="overflow-x-auto">
+      <table *ngIf="invoices.length > 0" class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Invoice ID
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Symbol
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Number
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Original Amount
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Currency
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Exchange Rate
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Pre-VAT Amount
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              VAT %
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Total Amount
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Invoice Date
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Due Date
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Payment Method
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Customer ID
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Project ID
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Staff
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Department
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Notes
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Created Date
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Created By
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Last Updated
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Updated By
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let invoice of invoices" 
+              class="hover:bg-gray-50 cursor-pointer transition-all duration-200"
+              (click)="navigateToInvoiceDetail(invoice)"
+              [title]="'Click to view invoice details'">
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-blue-600 hover:text-blue-800 font-medium" [title]="invoice.invoiceId || 'N/A'">
+                {{ truncateId(invoice.invoiceId) }}
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.invoiceSymbol }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ invoice.invoiceNumber }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">
+                {{ formatCurrency(invoice.originalAmount, invoice.currencyType) }}
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.currencyType }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.exchangeRate | number:'1.4-4' }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">
+                {{ formatVNDCurrency(getPreVATAmount(invoice)) }}
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.vat | number:'1.1-2' }}%</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-green-600">
+                {{ formatVNDCurrency(getTotalAmount(invoice)) }}
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ formatDate(invoice.invoiceDate) }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900" [class.text-red-600]="isOverdue(invoice.dueDate)">
+                {{ formatDate(invoice.dueDate) }}
+                <span *ngIf="isOverdue(invoice.dueDate)" class="text-xs block text-red-500">Overdue</span>
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="getPaymentMethodClass(invoice.paymentMethod)">
+                {{ invoice.paymentMethod }}
+              </span>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.customerId }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.projectId }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.staffUsername }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.department }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap max-w-xs">
+              <div class="text-sm text-gray-900 truncate" [title]="invoice.notes || ''">
+                {{ invoice.notes || 'N/A' }}
+              </div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ formatDate(invoice.createdDate) }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.createdByUsername || 'N/A' }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ formatDate(invoice.lastUpdateDate) }}</div>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.lastUpdatedByUsername || 'N/A' }}</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State for Invoices -->
+      <div *ngIf="invoices.length === 0" class="px-6 py-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p class="text-lg font-medium text-gray-500 mb-2">No invoices found</p>
+        <p class="text-sm text-gray-400">This contract doesn't have any associated invoices yet.</p>
+      </div>
+    </div>
+
+    <!-- Invoice Pagination -->
+    <div *ngIf="invoices.length > 0" class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+      <div class="flex-1 flex justify-between sm:hidden">
+        <button
+          (click)="onInvoicePageChange(invoiceCurrentPage - 1)"
+          [disabled]="invoiceCurrentPage === 1"
+          class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100 hover:text-gray-900 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+        >
+          Previous
+        </button>
+        <button
+          (click)="onInvoicePageChange(invoiceCurrentPage + 1)"
+          [disabled]="invoiceCurrentPage === invoiceTotalPages"
+          class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100 hover:text-gray-900 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+        >
+          Next
+        </button>
+      </div>
+      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700">
+            Showing <span class="font-medium">{{ (invoiceCurrentPage - 1) * invoicePageSize + 1 }}</span>
+            to <span class="font-medium">{{ Math.min(invoiceCurrentPage * invoicePageSize, invoiceTotalItems) }}</span>
+            of <span class="font-medium">{{ invoiceTotalItems }}</span> invoices
+          </p>
+        </div>
+        <div>
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+            <!-- First Page Button -->
+            <button
+              (click)="onInvoicePageChange(1)"
+              [disabled]="invoiceCurrentPage === 1"
+              class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+              title="First page"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <!-- Previous Page Button -->
+            <button
+              (click)="onInvoicePageChange(invoiceCurrentPage - 1)"
+              [disabled]="invoiceCurrentPage === 1"
+              class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+              title="Previous page"
+            >
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <!-- Page Numbers -->
+            <ng-container *ngFor="let item of getInvoicePaginationArray()">
+              <!-- Page Number Button -->
+              <button
+                *ngIf="item.type === 'page'"
+                (click)="onInvoicePageChange(item.value)"
+                [class.bg-blue-50]="item.value === invoiceCurrentPage"
+                [class.border-blue-50]="item.value === invoiceCurrentPage"
+                [class.text-blue-600]="item.value === invoiceCurrentPage"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 hover:shadow-md transition-all duration-200 ease-in-out"
+              >
+                {{ item.value }}
+              </button>
+              
+              <!-- Ellipsis -->
+              <span
+                *ngIf="item.type === 'ellipsis'"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500"
+              >
+                ...
+              </span>
+            </ng-container>
+
+            <!-- Next Page Button -->
+            <button
+              (click)="onInvoicePageChange(invoiceCurrentPage + 1)"
+              [disabled]="invoiceCurrentPage === invoiceTotalPages"
+              class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+              title="Next page"
+            >
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <!-- Last Page Button -->
+            <button
+              (click)="onInvoicePageChange(invoiceTotalPages)"
+              [disabled]="invoiceCurrentPage === invoiceTotalPages"
+              class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+              title="Last page"
+            >
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Edit Modal -->
+  <div *ngIf="showInvoiceEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+      <div class="mt-3">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Edit Invoice: {{ selectedInvoice?.invoiceNumber }}
+        </h3>
+        
+        <form (ngSubmit)="updateInvoice()" #invoiceFormRef="ngForm">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Invoice Symbol -->
+            <div>
+              <label for="invoiceSymbol" class="block text-sm font-medium text-gray-700 mb-1">
+                Invoice Symbol *
+              </label>
+              <input
+                type="text"
+                id="invoiceSymbol"
+                name="invoiceSymbol"
+                [(ngModel)]="invoiceForm.invoiceSymbol"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Invoice Number -->
+            <div>
+              <label for="invoiceNumber" class="block text-sm font-medium text-gray-700 mb-1">
+                Invoice Number *
+              </label>
+              <input
+                type="text"
+                id="invoiceNumber"
+                name="invoiceNumber"
+                [(ngModel)]="invoiceForm.invoiceNumber"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Original Amount -->
+            <div>
+              <label for="originalAmount" class="block text-sm font-medium text-gray-700 mb-1">
+                Original Amount *
+              </label>
+              <input
+                type="number"
+                id="originalAmount"
+                name="originalAmount"
+                [(ngModel)]="invoiceForm.originalAmount"
+                required
+                step="0.01"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Currency Type -->
+            <div>
+              <label for="currencyType" class="block text-sm font-medium text-gray-700 mb-1">
+                Currency *
+              </label>
+              <select
+                id="currencyType"
+                name="currencyType"
+                [(ngModel)]="invoiceForm.currencyType"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="VND">VND</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+              </select>
+            </div>
+
+            <!-- Exchange Rate -->
+            <div>
+              <label for="exchangeRate" class="block text-sm font-medium text-gray-700 mb-1">
+                Exchange Rate *
+              </label>
+              <input
+                type="number"
+                id="exchangeRate"
+                name="exchangeRate"
+                [(ngModel)]="invoiceForm.exchangeRate"
+                required
+                step="0.0001"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- VAT -->
+            <div>
+              <label for="vat" class="block text-sm font-medium text-gray-700 mb-1">
+                VAT (%) *
+              </label>
+              <input
+                type="number"
+                id="vat"
+                name="vat"
+                [(ngModel)]="invoiceForm.vat"
+                required
+                step="0.01"
+                min="0"
+                max="100"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Invoice Date -->
+            <div>
+              <label for="invoiceDate" class="block text-sm font-medium text-gray-700 mb-1">
+                Invoice Date *
+              </label>
+              <input
+                type="date"
+                id="invoiceDate"
+                name="invoiceDate"
+                [(ngModel)]="invoiceForm.invoiceDate"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Due Date -->
+            <div>
+              <label for="dueDate" class="block text-sm font-medium text-gray-700 mb-1">
+                Due Date *
+              </label>
+              <input
+                type="date"
+                id="dueDate"
+                name="dueDate"
+                [(ngModel)]="invoiceForm.dueDate"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Payment Method -->
+            <div>
+              <label for="paymentMethod" class="block text-sm font-medium text-gray-700 mb-1">
+                Payment Method *
+              </label>
+              <select
+                id="paymentMethod"
+                name="paymentMethod"
+                [(ngModel)]="invoiceForm.paymentMethod"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="Cash">Cash</option>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Check">Check</option>
+                <option value="Wire Transfer">Wire Transfer</option>
+              </select>
+            </div>
+
+            <!-- Customer ID -->
+            <div>
+              <label for="customerId" class="block text-sm font-medium text-gray-700 mb-1">
+                Customer ID *
+              </label>
+              <input
+                type="text"
+                id="customerId"
+                name="customerId"
+                [(ngModel)]="invoiceForm.customerId"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Project ID -->
+            <div>
+              <label for="projectId" class="block text-sm font-medium text-gray-700 mb-1">
+                Project ID *
+              </label>
+              <input
+                type="text"
+                id="projectId"
+                name="projectId"
+                [(ngModel)]="invoiceForm.projectId"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Staff Username -->
+            <div>
+              <label for="staffUsername" class="block text-sm font-medium text-gray-700 mb-1">
+                Staff Username *
+              </label>
+              <input
+                type="text"
+                id="staffUsername"
+                name="staffUsername"
+                [(ngModel)]="invoiceForm.staffUsername"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Department -->
+            <div>
+              <label for="department" class="block text-sm font-medium text-gray-700 mb-1">
+                Department *
+              </label>
+              <input
+                type="text"
+                id="department"
+                name="department"
+                [(ngModel)]="invoiceForm.department"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="mt-4">
+            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+              Notes
+            </label>
+            <textarea
+              id="notes"
+              name="notes"
+              [(ngModel)]="invoiceForm.notes"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Additional notes..."
+            ></textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              (click)="closeInvoiceEditModal()"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-400 hover:text-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200 ease-in-out"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              [disabled]="!invoiceFormRef.form.valid || loading"
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-800 hover:shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+            >
+              {{ loading ? 'Updating...' : 'Update Invoice' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

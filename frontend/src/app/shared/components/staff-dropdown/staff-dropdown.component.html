@@ -1,0 +1,133 @@
+<div class="staff-dropdown-container relative" (click)="$event.stopPropagation()">
+  <!-- Selected Value Display -->
+  <div 
+    class="w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white flex items-center justify-between"
+    [class.border-red-300]="required && !selectedStaff"
+    [class.bg-gray-100]="disabled"
+    [class.cursor-not-allowed]="disabled"
+    (click)="toggleDropdown()"
+  >
+    <span class="flex-1 truncate" [class.text-gray-500]="!selectedStaffName">
+      {{ selectedStaffName || placeholder }}
+    </span>
+    
+    <div class="flex items-center space-x-2">
+      <!-- Clear button -->
+      <button
+        *ngIf="selectedStaff && !disabled"
+        type="button"
+        (click)="clearSelection(); $event.stopPropagation()"
+        class="text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <!-- Dropdown arrow -->
+      <svg 
+        class="h-4 w-4 text-gray-400 transition-transform duration-200"
+        [class.transform]="isDropdownOpen"
+        [class.rotate-180]="isDropdownOpen"
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- Dropdown Menu -->
+  <div 
+    *ngIf="isDropdownOpen"
+    class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden"
+  >
+    <!-- Search Input -->
+    <div class="p-3 border-b border-gray-200">
+      <div class="relative">
+        <input
+          #searchInput
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchInput()"
+          placeholder="Type 3+ characters to search..."
+          class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+        >
+        <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+          <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div *ngIf="loading" class="absolute inset-y-0 right-0 pr-2 flex items-center">
+          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff List -->
+    <div class="max-h-48 overflow-y-auto">
+      <!-- Loading State -->
+      <div *ngIf="loading && searchQuery.length >= 3" class="p-3 text-center text-gray-500 text-sm">
+        <div class="flex items-center justify-center">
+          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+          Searching staff...
+        </div>
+      </div>
+
+      <!-- Search Hint -->
+      <div *ngIf="!loading && searchQuery.length > 0 && searchQuery.length < 3" class="p-3 text-center text-gray-500 text-sm">
+        Type {{ 3 - searchQuery.length }} more character{{ 3 - searchQuery.length === 1 ? '' : 's' }} to search
+      </div>
+
+      <!-- No Results -->
+      <div *ngIf="!loading && searchQuery.length >= 3 && filteredStaff.length === 0" class="p-3 text-center text-gray-500 text-sm">
+        No staff found matching "{{ searchQuery }}"
+      </div>
+
+      <!-- Staff Options -->
+      <div *ngIf="!loading && filteredStaff.length > 0">
+        <button
+          *ngFor="let staff of filteredStaff"
+          type="button"
+          (click)="selectStaff(staff)"
+          class="w-full px-3 py-2 text-left hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors border-b border-gray-100 last:border-b-0"
+          [class.bg-blue-50]="staff.username === selectedStaff"
+          [class.text-blue-700]="staff.username === selectedStaff"
+        >
+          <div class="flex items-center">
+            <div class="flex-shrink-0 h-8 w-8 mr-3">
+              <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span class="text-sm font-medium text-white">
+                  {{ staff.username.charAt(0).toUpperCase() }}
+                </span>
+              </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-gray-900 truncate">
+                {{ staff.username }}
+              </div>
+              <div *ngIf="staff.roleName" class="text-xs text-gray-500 truncate">
+                {{ staff.roleName }}
+              </div>
+            </div>
+            <div *ngIf="staff.username === selectedStaff" class="flex-shrink-0 ml-2">
+              <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Click outside handler -->
+<div 
+  *ngIf="isDropdownOpen"
+  class="fixed inset-0 z-40"
+  (click)="onClickOutside($event)"
+></div>

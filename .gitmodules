@@ -1,0 +1,4 @@
+[submodule "mysql"]
+	path = backend/mysql
+	url = https://github.com/Sukkaito/VDT2025-SE-QuanLyCongNo-MockData
+	branch = main

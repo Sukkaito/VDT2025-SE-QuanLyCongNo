@@ -1,0 +1,32 @@
+name: 'quanlycongno'
+services:
+  mariadb-database:
+    image: 'mariadb:latest'
+    container_name: 'mariadb-database'
+    environment:
+      - 'MARIADB_DATABASE=mydatabase'
+      - 'MARIADB_PASSWORD=password'
+      - 'MARIADB_ROOT_PASSWORD=verysecret'
+      - 'MARIADB_USER=myuser'
+    ports:
+      - '3306:3306'
+    networks:
+        - 'mariadb-network'
+    volumes:
+      - './mysql:/var/lib/mysql'
+  backend:
+    container_name: 'backend'
+    build:
+      context: '.'
+      dockerfile: 'Dockerfile'
+    ports:
+      - '8080:8080'
+    environment:
+      - 'SPRING.DATASOURCE.URL=jdbc:mariadb://mariadb-database:3306/mydatabase'
+      - 'SPRING.DATASOURCE.USERNAME=myuser'
+      - 'SPRING.DATASOURCE.PASSWORD=password'
+    networks:
+      - 'mariadb-network'
+networks:
+  mariadb-network:
+    driver: 'bridge'
