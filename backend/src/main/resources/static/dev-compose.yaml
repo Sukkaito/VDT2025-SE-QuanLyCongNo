@@ -1,0 +1,24 @@
+name: dev-compose-mariadb
+services:
+  mariadb-common:
+    image: 'mariadb:latest'
+    container_name: 'mariadb-common-2'
+    environment:
+      - 'MARIADB_DATABASE=mydatabase'
+      - 'MARIADB_PASSWORD=password'
+      - 'MARIADB_ROOT_PASSWORD=verysecret'
+      - 'MARIADB_USER=myuser'
+    ports:
+      - '3306:3306'
+  mariadb-stress-test:
+    image: 'mariadb:latest'
+    container_name: 'mariadb-stress-test-2'
+    environment:
+      - 'MARIADB_DATABASE=mydatabase'
+      - 'MARIADB_PASSWORD=password'
+      - 'MARIADB_ROOT_PASSWORD=verysecret'
+      - 'MARIADB_USER=myuser'
+    volumes:
+      - './../../../../mysql:/var/lib/mysql'
+    ports:
+      - '3306:3306'
