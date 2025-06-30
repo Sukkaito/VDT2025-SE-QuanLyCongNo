@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: mariadb-database
+    runtime: docker
+    plan: free
+    repo: https://github.com/Sukkaito/VDT2025-SE-QuanLyCongNo.git
+    branch: render-deploy
+    rootDir: backend
+    dockerfilePath: ./infra/database/Dockerfile
+    dockerContext: .
+    region: singapore
+    envVars:
+      - key: MARIADB_ROOT_PASSWORD
+        sync: false
+      - key: MARIADB_DATABASE
+        sync: false
+      - key: MARIADB_USER
+        sync: false
+      - key: MARIADB_PASSWORD
+        sync: false
+
+  - type: web
+    name: backend
+    runtime: docker
+    plan: free
+    repo: https://github.com/Sukkaito/VDT2025-SE-QuanLyCongNo.git
+    branch: render-deploy
+    rootDir: backend
+    dockerfilePath: ./infra/backend/Dockerfile
+    dockerContext: .
+    region: singapore
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:mariadb://mariadb-database:3306/mydatabase
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        value: myuser
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: password
+        sync: false
