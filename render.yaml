@@ -31,11 +31,14 @@ services:
     region: singapore
     envVars:
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:mariadb://mariadb-database:3306/mydatabase
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
-        value: myuser
-        sync: false
+        fromService:
+          name: mariadb-database
+          type: web
+          envVarKey: MARIADB_USER
       - key: SPRING_DATASOURCE_PASSWORD
-        value: password
-        sync: false
+        fromService:
+          name: mariadb-database
+          type: web
+          envVarKey: MARIADB_PASSWORD
