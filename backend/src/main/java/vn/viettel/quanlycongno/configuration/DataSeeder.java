@@ -15,6 +15,7 @@ import vn.viettel.quanlycongno.entity.*;
 import vn.viettel.quanlycongno.constant.RoleEnum;
 import vn.viettel.quanlycongno.repository.*;
 
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -34,7 +35,44 @@ public class DataSeeder {
     private final ContractRepository contractRepository;
     private final InvoiceRepository invoiceRepository;
     private final PasswordEncoder encoder;
-    private final JdbcTemplate jdbcTemplate = new JdbcTemplate();
+    private final JdbcTemplate jdbcTemplate;
+
+    @Bean
+    public CommandLineRunner initTriggers() {
+        return args -> {
+            logger.atInfo().log("Initializing database triggers...");
+            try {
+                String sql = """
+                CREATE OR REPLACE FUNCTION update_invoice_amounts()
+                    RETURNS TRIGGER AS $$
+                BEGIN
+                    NEW.converted_amount_pre_vat := NEW.original_amount * NEW.exchange_rate;
+                    NEW.total_amount_with_vat := NEW.converted_amount_pre_vat * (1 + NEW.vat / 100.0);
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+                
+                DROP TRIGGER IF EXISTS before_invoice_insert ON invoices;
+                CREATE TRIGGER before_invoice_insert
+                    BEFORE INSERT ON invoices
+                    FOR EACH ROW
+                EXECUTE FUNCTION update_invoice_amounts();
+                
+                DROP TRIGGER IF EXISTS before_invoice_update ON invoices;
+                CREATE TRIGGER before_invoice_update
+                    BEFORE UPDATE ON invoices
+                    FOR EACH ROW
+                EXECUTE FUNCTION update_invoice_amounts();
+                """;
+
+                jdbcTemplate.execute(sql);
+
+                logger.atInfo().log("Database triggers initialized successfully.");
+            } catch (Exception e) {
+                logger.atError().log("Error initializing database triggers: {}", e.getMessage());
+            }
+        };
+    }
 
     @Bean
     @Profile("prod")
@@ -50,6 +88,7 @@ public class DataSeeder {
             Staff adminStaff = new Staff("admin",
                     encoder.encode("admin123"),
                     adminRole); // Create admin staff with default credentials
+
             staffRepository.save(adminStaff);
             logger.atInfo().log("Default admin account created with username 'admin' and password 'admin123'.");
 

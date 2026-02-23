@@ -17,7 +17,6 @@ public class QuanlycongnoApplication {
 	public static ApplicationContext context;
 
 	public static void main(String[] args) {
-		System.setProperty("spring.profiles.active", "dev");
 		context = SpringApplication.run(QuanlycongnoApplication.class, args);
 	}
 
